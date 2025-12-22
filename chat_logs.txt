@@ -1,0 +1,3099 @@
+нужно составить план и выполнить все необходимые шаги для выполнения тестового задания
+
+Тестовое задание (на русском).
+
+Back-end Developer
+
+Необходимо создать модуль для хранения и конвертации валют.
+Модуль должен иметь предопределенный список валют (на усмотрение разработчика - захардкожен в модуле или добавляется через админку). Курсы валют должны быть загружены с https://freecurrencyapi.com/ (документация по API по ссылке https://freecurrencyapi.com/docs) для всех доступных валют и сохранены в БД. Обновление курсов должно происходить раз в сутки. Модуль должен предоставить сервис для конвертации цены из одной валюты в другую (использование примерно такое $converter->convert(123, ‘USD’, ‘RUB’);). Также должна быть создана страница в админке, где должны быть выведены все сохраненные курсы валют.
+Для интеграции с https://freecurrencyapi.com/ нельзя использовать готовые библиотеки именно для этого сайта (например, https://github.com/everapihq/freecurrencyapi-php). Интеграция должна быть реализована с помощью Guzzle, curl, file_get_content или другого инструмента для выполнения http запросов или сетевых запросов.
+Для написания конвертера валют можно использовать любой удобный PHP-фреймворк.
+
+Задание должно быть выполнено с помощью AI. Вместе с реализованным заданием нужно отправить скриншоты или выгрузку чатов из AI-агента или AI-чатов.
+
+комментарии по выполнению тестового задания:
+
+1. необходимо выполнить на laravel 12, используем разделение по модели реквест-тонкий контроллер-сервис-репозиторий
+
+2. админка на blade, 
+- необходимо реализовать методы ресурного контроллера CurrenciesController, в delete используем softDelete
+- необходимо реализовать метод index контроллера CurrencyRatesController
+- необходимо реализовать простой loginController с возможностью входа/выхода
+- необходимо реализовать blade views. используем разделение на layout и pages: currencies.index, currencies.create, currencies.edit, currency_rates.index, для стилей используем bootstrap
+- необходимо реализовать страницу входа в админку - форма с полями логин/пароль
+- роуты админки через middleware auth
+
+3. Модели и миграции
+необходимо добавить миграцию User. Поля:
+id,
+login,
+password,
+timestamps
+
+необходимо добавить миграцию для модели Currency. Поля:
+id,
+code - varchar, 8
+name_plural - var_char, 32
+timestamps,
+deleted_at
+
+необходимо добавить миграцию для модели CurrencyRate. Поля:
+id,
+currency_id,
+timestamps,
+
+4. обновление курсов валют проводим раз в сутки через крон задачу. нужно предусмотреть возможность автоматического повтора если запрос в крон задаче завершился неудачно - задача с задержкой 10 минут + сообщение в лог о неудачной попытке
+
+5. для выполнения запроса к api необходимо реализовать базовый абстрактный класс реквеста на основе Guzzle с абстрактными методами формирования параметров загрузчика. От него создать дочерний класс в котором формировать строку запроса с учетом env(currencies-api-key)
+
+вызываем конкретный ендпоинт через метод базового класса. в методе устанавливаем эндпоинт
+
+пример формирования запроса из документации api
+$url = "https://api.freecurrencyapi.com/v1/latest";
+
+$curl = curl_init($url);
+$headers = array(
+"apikey: YOUR-APIKEY",
+);
+
+$resp = curl_exec($curl);
+var_dump($resp);
+
+6. Необходимо добавить публичный api для доступа к сервису. для верифицирования в маршруте и неймспейсе используем v1
+Добавить контроллер и api роут. Перевод из одной валюты в другую выполнняем с помощью поля latest_exchange_rate модели CurrencyRate, который содержит отношение курса валюты к доллару США
+
+7. необходимо реализовать тесты
+- юнит тест конвертации валют
+- feature-test доступа к публичному api
+- feature-test доступа к админке с проверкой доступа к маршрутам и проверкой ролей
+
+8. необходимо реализовать сиды для загрузки в базу данных списка валют, доступных по адресу: https://freecurrencyapi.com/docs/currency-list и создания пользователя с ролью Администратор (login - admin, password - admin (захещированый))
+
+9. необходимо упаковать готовое решение в докер композ, для базового контейнера используем php 8.4 apache + sqlite + установка зависимостей
+после запуска должны быть запущены необходимые миграции, сиды, запущены два контейнера - один для работы веб-приложения, второй для работы очереди
+
+--------------------------------------------------------------------------------
+
+Общая архитектура
+
+Стек
+
+Laravel 12
+
+PHP 8.4
+
+Blade + Bootstrap
+
+SQLite
+
+Guzzle
+
+Очереди + cron
+
+Docker Compose
+
+Архитектурный подход
+
+Request → Controller (thin) → Service → Repository → Model
+
+🧭 ROADMAP ВЫПОЛНЕНИЯ
+ЭТАП 0. Инициализация проекта
+
+Результат: чистый Laravel 12 проект в Docker
+
+Шаги
+
+Создать Laravel 12 проект
+
+Настроить .env
+
+Подключить SQLite
+
+Подключить Guzzle
+
+Подготовить Docker Compose (позже доработаем)
+
+ЭТАП 1. Модели и миграции (база данных)
+1.1 User
+
+Миграция
+
+users
+- id
+- login (string, unique)
+- password (string)
+- timestamps
+
+
+Модель
+
+$fillable
+
+скрыть password
+
+1.2 Currency
+
+Миграция
+
+currencies
+- id
+- code (varchar 8, unique)
+- name_plural (varchar 32)
+- timestamps
+- deleted_at
+
+
+Модель
+
+SoftDeletes
+
+связь с CurrencyRate
+
+1.3 CurrencyRate
+
+Миграция
+
+currency_rates
+- id
+- currency_id (FK)
+- latest_exchange_rate (decimal)
+- timestamps
+
+
+Модель
+
+belongsTo Currency
+
+ЭТАП 2. Аутентификация (админка)
+
+Цель: простая админка без Laravel Breeze
+
+Реализовать:
+
+LoginController
+
+showLoginForm
+
+login
+
+logout
+
+Guard: web
+
+Middleware: auth
+
+📌 Форма входа
+
+login
+
+password
+
+ЭТАП 3. Админка (Blade + Bootstrap)
+Layout
+resources/views/layouts/admin.blade.php
+
+3.1 CurrenciesController (resource)
+
+Методы
+
+index
+
+create
+
+store
+
+edit
+
+update
+
+destroy → softDelete
+
+Views
+
+currencies.index
+currencies.create
+currencies.edit
+
+3.2 CurrencyRatesController
+
+Методы
+
+index
+
+View
+
+currency_rates.index
+
+3.3 Роуты админки
+Route::middleware('auth')->group(function () {
+    Route::resource('currencies', CurrenciesController::class);
+    Route::get('currency-rates', [CurrencyRatesController::class, 'index']);
+});
+
+ЭТАП 4. Интеграция с FreeCurrencyAPI
+4.1 Абстрактный API-клиент
+abstract class BaseApiRequest
+{
+    protected Client $client;
+
+    abstract protected function endpoint(): string;
+    abstract protected function params(): array;
+
+    public function send(): array;
+}
+
+4.2 Реализация FreeCurrencyApiRequest
+
+endpoint: /v1/latest
+
+headers:
+
+apikey: env('CURRENCIES_API_KEY')
+
+ЭТАП 5. Обновление курсов (cron + queue)
+Реализовать:
+
+Job: UpdateCurrencyRatesJob
+
+Command: currency:update-rates
+
+Планировщик (Kernel)
+
+Логика:
+
+Запрос к API
+
+Сохранение курсов
+
+Если ошибка:
+
+лог
+
+retry через 10 минут
+
+ЭТАП 6. Сервис конвертации валют
+Интерфейс
+interface CurrencyConverterInterface
+{
+    public function convert(float $amount, string $from, string $to): float;
+}
+
+Реализация
+
+через latest_exchange_rate
+
+базовая валюта — USD
+
+📌 Формула:
+
+amount_in_usd = amount / from_rate
+result = amount_in_usd * to_rate
+
+ЭТАП 7. Публичный API (v1)
+Endpoint
+POST /api/v1/convert
+
+Controller
+
+CurrencyConvertController
+
+Request validation
+
+Response
+{
+  "amount": 100,
+  "from": "USD",
+  "to": "EUR",
+  "result": 92.34
+}
+
+ЭТАП 8. Сиды
+CurrencySeeder
+
+загрузка списка валют
+
+источник: docs freecurrencyapi
+
+UserSeeder
+login: admin
+password: admin (bcrypt)
+role: admin
+
+ЭТАП 9. Тесты
+Unit
+
+CurrencyConverterTest
+
+Feature
+
+Public API convert
+
+Admin auth
+
+Admin routes access
+
+ЭТАП 10. Docker Compose
+Контейнеры
+
+app
+
+php 8.4 + apache
+
+artisan migrate --seed
+
+queue
+
+php 8.4
+
+php artisan queue:work
+
+--------------------------------------------------------------------------------
+
+Переходим к шагу 1
+Сформируй код для пунктов 1.1, 1.2, 1.3
+
+--------------------------------------------------------------------------------
+
+
+Отлично, идём по плану 👍
+Ниже полный готовый код для ЭТАПА 1: пункты 1.1, 1.2, 1.3 под Laravel 12, с учётом требований задания.
+
+🔹 1.1 User — миграция и модель
+📄 Миграция users
+
+database/migrations/xxxx_xx_xx_create_users_table.php
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    public function up(): void
+    {
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('login')->unique();
+            $table->string('password');
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('users');
+    }
+};
+
+📄 Модель User
+
+app/Models/User.php
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+
+class User extends Authenticatable
+{
+    use Notifiable;
+
+    protected $fillable = [
+        'login',
+        'password',
+    ];
+
+    protected $hidden = [
+        'password',
+    ];
+}
+
+
+📌 Важно:
+Мы наследуемся от Authenticatable, чтобы auth middleware работал без костылей.
+
+🔹 1.2 Currency — миграция и модель
+📄 Миграция currencies
+
+database/migrations/xxxx_xx_xx_create_currencies_table.php
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    public function up(): void
+    {
+        Schema::create('currencies', function (Blueprint $table) {
+            $table->id();
+            $table->string('code', 8)->unique();
+            $table->string('name_plural', 32);
+            $table->timestamps();
+            $table->softDeletes();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('currencies');
+    }
+};
+
+📄 Модель Currency
+
+app/Models/Currency.php
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Currency extends Model
+{
+    use SoftDeletes;
+
+    protected $fillable = [
+        'code',
+        'name_plural',
+    ];
+
+    public function rates(): HasMany
+    {
+        return $this->hasMany(CurrencyRate::class);
+    }
+}
+
+🔹 1.3 CurrencyRate — миграция и модель
+📄 Миграция currency_rates
+
+database/migrations/xxxx_xx_xx_create_currency_rates_table.php
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    public function up(): void
+    {
+        Schema::create('currency_rates', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('currency_id')
+                ->constrained('currencies')
+                ->cascadeOnDelete();
+
+            $table->decimal('latest_exchange_rate', 15, 8);
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('currency_rates');
+    }
+};
+
+📄 Модель CurrencyRate
+
+app/Models/CurrencyRate.php
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class CurrencyRate extends Model
+{
+    protected $fillable = [
+        'currency_id',
+        'latest_exchange_rate',
+    ];
+
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class);
+    }
+}
+
+✅ Что в итоге выполнено на шаге 1
+
+✔ User (миграция + модель, готов к auth)
+✔ Currency (SoftDelete, связи)
+✔ CurrencyRate (FK, decimal под курсы)
+✔ Архитектура полностью соответствует ТЗ
+
+--------------------------------------------------------------------------------
+
+Переходим к шагу 2
+
+--------------------------------------------------------------------------------
+
+ЭТАП 2. Аутентификация
+📌 Что реализуем
+
+LoginController
+
+Страница логина (Blade + Bootstrap)
+
+Логин / логаут
+
+Middleware auth
+
+Используем поле login, а не email
+
+2.1 Настройка auth под поле login
+📄 config/auth.php
+
+Убедись, что провайдер users стандартный:
+
+'providers' => [
+    'users' => [
+        'driver' => 'eloquent',
+        'model' => App\Models\User::class,
+    ],
+],
+
+
+Ничего больше менять не нужно.
+
+2.2 LoginController
+📄 app/Http/Controllers/Auth/LoginController.php
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class LoginController extends Controller
+{
+    public function showLoginForm()
+    {
+        return view('auth.login');
+    }
+
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'login' => ['required', 'string'],
+            'password' => ['required', 'string'],
+        ]);
+
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+
+            return redirect()->intended('/currencies');
+        }
+
+        return back()->withErrors([
+            'login' => 'Неверный логин или пароль',
+        ]);
+    }
+
+    public function logout(Request $request)
+    {
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login.form');
+    }
+}
+
+
+📌 Почему так правильно
+
+Auth::attempt() — стандарт Laravel
+
+session()->regenerate() — защита от session fixation
+
+intended() — корректно после middleware auth
+
+2.3 Роуты аутентификации
+📄 routes/web.php
+use App\Http\Controllers\Auth\LoginController;
+
+Route::get('/login', [LoginController::class, 'showLoginForm'])
+    ->name('login.form');
+
+Route::post('/login', [LoginController::class, 'login'])
+    ->name('login');
+
+Route::post('/logout', [LoginController::class, 'logout'])
+    ->name('logout');
+
+2.4 Middleware auth для админки
+
+Позже админские роуты будут выглядеть так:
+
+Route::middleware('auth')->group(function () {
+    // admin routes
+});
+
+
+Laravel middleware auth уже есть — ничего дописывать не нужно.
+
+2.5 Blade — layout для админки
+📄 resources/views/layouts/admin.blade.php
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>@yield('title', 'Admin')</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url('/currencies') }}">Currency Admin</a>
+
+        @auth
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button class="btn btn-outline-light btn-sm">Выход</button>
+            </form>
+        @endauth
+    </div>
+</nav>
+
+<div class="container">
+    @yield('content')
+</div>
+
+</body>
+</html>
+
+2.6 Blade — страница логина
+📄 resources/views/auth/login.blade.php
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Вход в админку</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+
+            <div class="card">
+                <div class="card-header text-center">
+                    Вход в админку
+                </div>
+
+                <div class="card-body">
+                    <form method="POST" action="{{ route('login') }}">
+                        @csrf
+
+                        <div class="mb-3">
+                            <label class="form-label">Логин</label>
+                            <input type="text"
+                                   name="login"
+                                   class="form-control @error('login') is-invalid @enderror"
+                                   value="{{ old('login') }}"
+                                   required>
+                            @error('login')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Пароль</label>
+                            <input type="password"
+                                   name="password"
+                                   class="form-control"
+                                   required>
+                        </div>
+
+                        <button class="btn btn-primary w-100">
+                            Войти
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+
+✅ Что выполнено на шаге 2
+
+✔ LoginController (login / logout)
+✔ Аутентификация через поле login
+✔ Middleware auth готов
+✔ Страница входа
+✔ Layout админки
+✔ Bootstrap подключён
+
+👉 Следующий шаг
+
+ЭТАП 3 — Админка
+
+CurrenciesController (resource, soft delete)
+
+CurrencyRatesController@index
+
+Blade страницы:
+
+currencies.index
+
+currencies.create
+
+currencies.edit
+
+currency_rates.index
+
+Роуты админки
+
+Скажи: «Переходим к шагу 3» — и продолжаем.
+
+правки по шаблонам страниц:
+
+используем общий layout, в котором подключаем bootstrap. title передаем из страниц. добавить lang="{{ app()->getLocale() }}"
+для стилизации используем bootstrap (уже реализовано)
+в роуты необходимо добавить мидвары guest для методов login и auth для logout
+
+Отличные правки — они правильные и ожидаемые для продакшн-кода 👍
+Давай аккуратно внесём изменения и я покажу исправленный эталон, который можно сразу коммитить.
+
+✅ Правки по шаблонам (Blade)
+1️⃣ Общий layout с Bootstrap и lang
+
+Теперь:
+
+один layout для всех страниц (включая login)
+
+Bootstrap подключается только в layout
+
+title передаётся из страниц
+
+добавлен lang="{{ app()->getLocale() }}"
+
+📄 resources/views/layouts/app.blade.php
+<!DOCTYPE html>
+<html lang="{{ app()->getLocale() }}">
+<head>
+    <meta charset="UTF-8">
+    <title>@yield('title', 'Admin')</title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url('/currencies') }}">
+            Currency Admin
+        </a>
+
+        @auth
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button class="btn btn-outline-light btn-sm">
+                    Выход
+                </button>
+            </form>
+        @endauth
+    </div>
+</nav>
+
+<div class="container">
+    @yield('content')
+</div>
+
+</body>
+</html>
+
+
+📌
+Этот layout теперь универсальный — и для login, и для админки.
+
+2️⃣ Шаблон логина через общий layout
+📄 resources/views/auth/login.blade.php
+@extends('layouts.app')
+
+@section('title', 'Вход в админку')
+
+@section('content')
+<div class="row justify-content-center">
+    <div class="col-md-4">
+
+        <div class="card">
+            <div class="card-header text-center">
+                Вход в админку
+            </div>
+
+            <div class="card-body">
+                <form method="POST" action="{{ route('login') }}">
+                    @csrf
+
+                    <div class="mb-3">
+                        <label class="form-label">Логин</label>
+                        <input type="text"
+                               name="login"
+                               class="form-control @error('login') is-invalid @enderror"
+                               value="{{ old('login') }}"
+                               required>
+
+                        @error('login')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Пароль</label>
+                        <input type="password"
+                               name="password"
+                               class="form-control"
+                               required>
+                    </div>
+
+                    <button class="btn btn-primary w-100">
+                        Войти
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+@endsection
+
+
+✔ Bootstrap — из layout
+✔ Title — через @section('title')
+✔ Никакого дублирования HTML
+
+✅ Правки по роутам (guest / auth middleware)
+Требование:
+
+login → guest
+
+logout → auth
+
+Это best practice 👍
+
+📄 routes/web.php
+use App\Http\Controllers\Auth\LoginController;
+
+/*
+|--------------------------------------------------------------------------
+| Auth routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [LoginController::class, 'showLoginForm'])
+        ->name('login.form');
+
+    Route::post('/login', [LoginController::class, 'login'])
+        ->name('login');
+});
+
+Route::post('/logout', [LoginController::class, 'logout'])
+    ->middleware('auth')
+    ->name('logout');
+
+
+📌 Что это даёт:
+
+залогиненный пользователь не попадёт на /login
+
+logout невозможен без авторизации
+
+корректная работа redirect()->intended()
+
+✅ Итог после правок
+
+✔ Один общий layout
+✔ Bootstrap подключён централизованно
+✔ lang="{{ app()->getLocale() }}"
+✔ title управляется из страниц
+✔ guest / auth middleware расставлены корректно
+
+--------------------------------------------------------------------------------
+
+Переходим к шагу 3
+
+--------------------------------------------------------------------------------
+
+ЭТАП 3. Админка (Currencies + CurrencyRates)
+📌 Что реализуем
+
+CurrenciesController (resource, soft delete)
+
+CurrencyRatesController@index
+
+Blade views:
+
+currencies.index
+
+currencies.create
+
+currencies.edit
+
+currency_rates.index
+
+Роуты админки под auth
+
+3.1 Repository слой
+📄 app/Repositories/CurrencyRepository.php
+<?php
+
+namespace App\Repositories;
+
+use App\Models\Currency;
+use Illuminate\Database\Eloquent\Collection;
+
+class CurrencyRepository
+{
+    public function all(): Collection
+    {
+        return Currency::query()->latest()->get();
+    }
+
+    public function find(int $id): Currency
+    {
+        return Currency::query()->findOrFail($id);
+    }
+
+    public function create(array $data): Currency
+    {
+        return Currency::query()->create($data);
+    }
+
+    public function update(Currency $currency, array $data): Currency
+    {
+        $currency->update($data);
+        return $currency;
+    }
+
+    public function delete(Currency $currency): void
+    {
+        $currency->delete(); // soft delete
+    }
+}
+
+📄 app/Repositories/CurrencyRateRepository.php
+<?php
+
+namespace App\Repositories;
+
+use App\Models\CurrencyRate;
+use Illuminate\Database\Eloquent\Collection;
+
+class CurrencyRateRepository
+{
+    public function allWithCurrency(): Collection
+    {
+        return CurrencyRate::query()
+            ->with('currency')
+            ->latest()
+            ->get();
+    }
+}
+
+3.2 Service слой
+📄 app/Services/CurrencyService.php
+<?php
+
+namespace App\Services;
+
+use App\Models\Currency;
+use App\Repositories\CurrencyRepository;
+use Illuminate\Database\Eloquent\Collection;
+
+class CurrencyService
+{
+    public function __construct(
+        private readonly CurrencyRepository $repository
+    ) {}
+
+    public function list(): Collection
+    {
+        return $this->repository->all();
+    }
+
+    public function create(array $data): Currency
+    {
+        return $this->repository->create($data);
+    }
+
+    public function update(int $id, array $data): Currency
+    {
+        $currency = $this->repository->find($id);
+        return $this->repository->update($currency, $data);
+    }
+
+    public function delete(int $id): void
+    {
+        $currency = $this->repository->find($id);
+        $this->repository->delete($currency);
+    }
+
+    public function find(int $id): Currency
+    {
+        return $this->repository->find($id);
+    }
+}
+
+📄 app/Services/CurrencyRateService.php
+<?php
+
+namespace App\Services;
+
+use App\Repositories\CurrencyRateRepository;
+use Illuminate\Database\Eloquent\Collection;
+
+class CurrencyRateService
+{
+    public function __construct(
+        private readonly CurrencyRateRepository $repository
+    ) {}
+
+    public function list(): Collection
+    {
+        return $this->repository->allWithCurrency();
+    }
+}
+
+3.3 Form Request (валидация)
+📄 app/Http/Requests/CurrencyRequest.php
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class CurrencyRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'code' => ['required', 'string', 'max:8'],
+            'name_plural' => ['required', 'string', 'max:32'],
+        ];
+    }
+}
+
+3.4 Контроллеры (тонкие)
+📄 app/Http/Controllers/CurrenciesController.php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\CurrencyRequest;
+use App\Services\CurrencyService;
+
+class CurrenciesController extends Controller
+{
+    public function __construct(
+        private readonly CurrencyService $service
+    ) {}
+
+    public function index()
+    {
+        return view('currencies.index', [
+            'currencies' => $this->service->list(),
+        ]);
+    }
+
+    public function create()
+    {
+        return view('currencies.create');
+    }
+
+    public function store(CurrencyRequest $request)
+    {
+        $this->service->create($request->validated());
+
+        return redirect()
+            ->route('currencies.index')
+            ->with('success', 'Валюта создана');
+    }
+
+    public function edit(int $id)
+    {
+        return view('currencies.edit', [
+            'currency' => $this->service->find($id),
+        ]);
+    }
+
+    public function update(CurrencyRequest $request, int $id)
+    {
+        $this->service->update($id, $request->validated());
+
+        return redirect()
+            ->route('currencies.index')
+            ->with('success', 'Валюта обновлена');
+    }
+
+    public function destroy(int $id)
+    {
+        $this->service->delete($id);
+
+        return redirect()
+            ->route('currencies.index')
+            ->with('success', 'Валюта удалена');
+    }
+}
+
+📄 app/Http/Controllers/CurrencyRatesController.php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Services\CurrencyRateService;
+
+class CurrencyRatesController extends Controller
+{
+    public function __construct(
+        private readonly CurrencyRateService $service
+    ) {}
+
+    public function index()
+    {
+        return view('currency_rates.index', [
+            'rates' => $this->service->list(),
+        ]);
+    }
+}
+
+3.5 Blade views
+📄 resources/views/currencies/index.blade.php
+@extends('layouts.app')
+
+@section('title', 'Валюты')
+
+@section('content')
+<a href="{{ route('currencies.create') }}" class="btn btn-success mb-3">
+    Добавить валюту
+</a>
+
+<table class="table table-bordered">
+    <tr>
+        <th>ID</th>
+        <th>Code</th>
+        <th>Name</th>
+        <th></th>
+    </tr>
+    @foreach($currencies as $currency)
+        <tr>
+            <td>{{ $currency->id }}</td>
+            <td>{{ $currency->code }}</td>
+            <td>{{ $currency->name_plural }}</td>
+            <td>
+                <a href="{{ route('currencies.edit', $currency) }}" class="btn btn-sm btn-primary">Edit</a>
+
+                <form method="POST"
+                      action="{{ route('currencies.destroy', $currency) }}"
+                      class="d-inline">
+                    @csrf
+                    @method('DELETE')
+                    <button class="btn btn-sm btn-danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+    @endforeach
+</table>
+@endsection
+
+📄 resources/views/currencies/create.blade.php
+@extends('layouts.app')
+
+@section('title', 'Создание валюты')
+
+@section('content')
+<form method="POST" action="{{ route('currencies.store') }}">
+    @csrf
+
+    <div class="mb-3">
+        <label class="form-label">Code</label>
+        <input name="code" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Name plural</label>
+        <input name="name_plural" class="form-control" required>
+    </div>
+
+    <button class="btn btn-success">Сохранить</button>
+</form>
+@endsection
+
+📄 resources/views/currencies/edit.blade.php
+@extends('layouts.app')
+
+@section('title', 'Редактирование валюты')
+
+@section('content')
+<form method="POST" action="{{ route('currencies.update', $currency) }}">
+    @csrf
+    @method('PUT')
+
+    <div class="mb-3">
+        <label class="form-label">Code</label>
+        <input name="code" class="form-control" value="{{ $currency->code }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Name plural</label>
+        <input name="name_plural" class="form-control" value="{{ $currency->name_plural }}" required>
+    </div>
+
+    <button class="btn btn-primary">Обновить</button>
+</form>
+@endsection
+
+📄 resources/views/currency_rates/index.blade.php
+@extends('layouts.app')
+
+@section('title', 'Курсы валют')
+
+@section('content')
+<table class="table table-striped">
+    <tr>
+        <th>Currency</th>
+        <th>Rate (USD)</th>
+        <th>Updated</th>
+    </tr>
+
+    @foreach($rates as $rate)
+        <tr>
+            <td>{{ $rate->currency->code }}</td>
+            <td>{{ $rate->latest_exchange_rate }}</td>
+            <td>{{ $rate->updated_at }}</td>
+        </tr>
+    @endforeach
+</table>
+@endsection
+
+3.6 Роуты админки
+📄 routes/web.php
+use App\Http\Controllers\CurrenciesController;
+use App\Http\Controllers\CurrencyRatesController;
+
+Route::middleware('auth')->group(function () {
+    Route::resource('currencies', CurrenciesController::class);
+    Route::get('currency-rates', [CurrencyRatesController::class, 'index'])
+        ->name('currency-rates.index');
+});
+
+✅ Итог ЭТАПА 3
+
+✔ Resource-контроллер с soft delete
+✔ Разделение controller / service / repository
+✔ Blade admin UI
+✔ Bootstrap
+✔ Middleware auth
+
+--------------------------------------------------------------------------------
+
+правки по реализации 
+- из репозиториев необходимо возвращать Entity - не Active record. Возвращать массив, в php-doc указать что возвращаем массив элементов конкретного типа Entity
+- завести отдельные entities для Currency и CurrencyRate 
+- в CurrencyRequest добавить правило проверки уникальности code. Разделить CurrencyRequest на два отдельных реквеста: для создания и обновления 
+- в контроллерах формировать DTO который потом передавать в сервис а из сервиса в репозиторий. Завести DTO для Currency и CurrencyRate 
+- в Blade views через комментарий указать что используем массивы с конкретными моделями
+
+
+--------------------------------------------------------------------------------
+
+1. Entities (не ActiveRecord)
+
+Entities — простые immutable-объекты, не знают о БД.
+
+📄 app/Entities/CurrencyEntity.php
+<?php
+
+namespace App\Entities;
+
+class CurrencyEntity
+{
+    public function __construct(
+        public readonly int $id,
+        public readonly string $code,
+        public readonly string $namePlural,
+    ) {}
+}
+
+📄 app/Entities/CurrencyRateEntity.php
+<?php
+
+namespace App\Entities;
+
+class CurrencyRateEntity
+{
+    public function __construct(
+        public readonly int $id,
+        public readonly int $currencyId,
+        public readonly string $currencyCode,
+        public readonly float $latestExchangeRate,
+        public readonly string $updatedAt,
+    ) {}
+}
+
+✅ 2. DTO (Controller → Service → Repository)
+
+DTO — входные данные для бизнес-логики.
+
+📄 app/DTO/CurrencyDTO.php
+<?php
+
+namespace App\DTO;
+
+class CurrencyDTO
+{
+    public function __construct(
+        public readonly string $code,
+        public readonly string $namePlural,
+    ) {}
+}
+
+📄 app/DTO/CurrencyRateDTO.php
+<?php
+
+namespace App\DTO;
+
+class CurrencyRateDTO
+{
+    public function __construct(
+        public readonly int $currencyId,
+        public readonly float $latestExchangeRate,
+    ) {}
+}
+
+✅ 3. Repository → возвращаем Entity (массив)
+❗ Важно
+
+НЕ возвращаем Eloquent
+
+Возвращаем array<CurrencyEntity>
+
+Тип указываем в phpDoc
+
+📄 app/Repositories/CurrencyRepository.php
+<?php
+
+namespace App\Repositories;
+
+use App\DTO\CurrencyDTO;
+use App\Entities\CurrencyEntity;
+use App\Models\Currency;
+
+/**
+ * @return CurrencyEntity[]
+ */
+class CurrencyRepository
+{
+    /**
+     * @return CurrencyEntity[]
+     */
+    public function all(): array
+    {
+        return Currency::query()
+            ->latest()
+            ->get()
+            ->map(fn (Currency $currency) => new CurrencyEntity(
+                id: $currency->id,
+                code: $currency->code,
+                namePlural: $currency->name_plural,
+            ))
+            ->all();
+    }
+
+    public function create(CurrencyDTO $dto): void
+    {
+        Currency::query()->create([
+            'code' => $dto->code,
+            'name_plural' => $dto->namePlural,
+        ]);
+    }
+
+    public function update(int $id, CurrencyDTO $dto): void
+    {
+        Currency::query()
+            ->whereKey($id)
+            ->update([
+                'code' => $dto->code,
+                'name_plural' => $dto->namePlural,
+            ]);
+    }
+
+    public function delete(int $id): void
+    {
+        Currency::query()->whereKey($id)->delete();
+    }
+}
+
+📄 app/Repositories/CurrencyRateRepository.php
+<?php
+
+namespace App\Repositories;
+
+use App\Entities\CurrencyRateEntity;
+use App\Models\CurrencyRate;
+
+/**
+ * @return CurrencyRateEntity[]
+ */
+class CurrencyRateRepository
+{
+    /**
+     * @return CurrencyRateEntity[]
+     */
+    public function all(): array
+    {
+        return CurrencyRate::query()
+            ->with('currency')
+            ->latest()
+            ->get()
+            ->map(fn (CurrencyRate $rate) => new CurrencyRateEntity(
+                id: $rate->id,
+                currencyId: $rate->currency_id,
+                currencyCode: $rate->currency->code,
+                latestExchangeRate: (float) $rate->latest_exchange_rate,
+                updatedAt: $rate->updated_at->toDateTimeString(),
+            ))
+            ->all();
+    }
+}
+
+✅ 4. Service → работает с DTO и Entity
+📄 app/Services/CurrencyService.php
+<?php
+
+namespace App\Services;
+
+use App\DTO\CurrencyDTO;
+use App\Entities\CurrencyEntity;
+use App\Repositories\CurrencyRepository;
+
+/**
+ * @return CurrencyEntity[]
+ */
+class CurrencyService
+{
+    public function __construct(
+        private readonly CurrencyRepository $repository
+    ) {}
+
+    /**
+     * @return CurrencyEntity[]
+     */
+    public function list(): array
+    {
+        return $this->repository->all();
+    }
+
+    public function create(CurrencyDTO $dto): void
+    {
+        $this->repository->create($dto);
+    }
+
+    public function update(int $id, CurrencyDTO $dto): void
+    {
+        $this->repository->update($id, $dto);
+    }
+
+    public function delete(int $id): void
+    {
+        $this->repository->delete($id);
+    }
+}
+
+✅ 5. Form Requests — разделение create / update + unique
+📄 CurrencyStoreRequest.php
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class CurrencyStoreRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'code' => ['required', 'string', 'max:8', 'unique:currencies,code'],
+            'name_plural' => ['required', 'string', 'max:32'],
+        ];
+    }
+
+    public function authorize(): bool
+    {
+        return true;
+    }
+}
+
+📄 CurrencyUpdateRequest.php
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class CurrencyUpdateRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'code' => [
+                'required',
+                'string',
+                'max:8',
+                'unique:currencies,code,' . $this->route('currency'),
+            ],
+            'name_plural' => ['required', 'string', 'max:32'],
+        ];
+    }
+
+    public function authorize(): bool
+    {
+        return true;
+    }
+}
+
+✅ 6. Controller → формируем DTO
+📄 CurrenciesController.php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\DTO\CurrencyDTO;
+use App\Http\Requests\CurrencyStoreRequest;
+use App\Http\Requests\CurrencyUpdateRequest;
+use App\Services\CurrencyService;
+
+class CurrenciesController extends Controller
+{
+    public function __construct(
+        private readonly CurrencyService $service
+    ) {}
+
+    public function index()
+    {
+        return view('currencies.index', [
+            /** @var \App\Entities\CurrencyEntity[] $currencies */
+            'currencies' => $this->service->list(),
+        ]);
+    }
+
+    public function store(CurrencyStoreRequest $request)
+    {
+        $dto = new CurrencyDTO(
+            code: $request->string('code'),
+            namePlural: $request->string('name_plural'),
+        );
+
+        $this->service->create($dto);
+
+        return redirect()->route('currencies.index');
+    }
+
+    public function update(CurrencyUpdateRequest $request, int $currency)
+    {
+        $dto = new CurrencyDTO(
+            code: $request->string('code'),
+            namePlural: $request->string('name_plural'),
+        );
+
+        $this->service->update($currency, $dto);
+
+        return redirect()->route('currencies.index');
+    }
+
+    public function destroy(int $currency)
+    {
+        $this->service->delete($currency);
+
+        return redirect()->route('currencies.index');
+    }
+}
+
+✅ 7. Blade — комментарии о типах данных
+📄 currencies/index.blade.php
+@extends('layouts.app')
+
+@section('title', 'Валюты')
+
+@section('content')
+{{-- @var \App\Entities\CurrencyEntity[] $currencies --}}
+
+<table class="table table-bordered">
+    @foreach($currencies as $currency)
+        <tr>
+            <td>{{ $currency->id }}</td>
+            <td>{{ $currency->code }}</td>
+            <td>{{ $currency->namePlural }}</td>
+        </tr>
+    @endforeach
+</table>
+@endsection
+
+📄 currency_rates/index.blade.php
+@extends('layouts.app')
+
+@section('title', 'Курсы валют')
+
+@section('content')
+{{-- @var \App\Entities\CurrencyRateEntity[] $rates --}}
+
+<table class="table table-striped">
+    @foreach($rates as $rate)
+        <tr>
+            <td>{{ $rate->currencyCode }}</td>
+            <td>{{ $rate->latestExchangeRate }}</td>
+            <td>{{ $rate->updatedAt }}</td>
+        </tr>
+    @endforeach
+</table>
+@endsection
+
+--------------------------------------------------------------------------------
+
+методы create , update должны возвращать entity необходимо выбрасывать исключение если при update или delete запись не найдена
+
+--------------------------------------------------------------------------------
+
+1. Исключение «Entity not found»
+
+Заведём доменное исключение.
+
+📄 app/Exceptions/EntityNotFoundException.php
+<?php
+
+namespace App\Exceptions;
+
+use RuntimeException;
+
+class EntityNotFoundException extends RuntimeException
+{
+}
+
+✅ 2. Repository — create / update возвращают Entity
+
+выбрасываем исключение при update / delete
+
+📄 app/Repositories/CurrencyRepository.php (исправленный)
+<?php
+
+namespace App\Repositories;
+
+use App\DTO\CurrencyDTO;
+use App\Entities\CurrencyEntity;
+use App\Exceptions\EntityNotFoundException;
+use App\Models\Currency;
+
+/**
+ * @return CurrencyEntity[]
+ */
+class CurrencyRepository
+{
+    /**
+     * @return CurrencyEntity[]
+     */
+    public function all(): array
+    {
+        return Currency::query()
+            ->latest()
+            ->get()
+            ->map(fn (Currency $currency) => $this->toEntity($currency))
+            ->all();
+    }
+
+    public function create(CurrencyDTO $dto): CurrencyEntity
+    {
+        $currency = Currency::query()->create([
+            'code' => $dto->code,
+            'name_plural' => $dto->namePlural,
+        ]);
+
+        return $this->toEntity($currency);
+    }
+
+    public function update(int $id, CurrencyDTO $dto): CurrencyEntity
+    {
+        $currency = Currency::query()->find($id);
+
+        if (!$currency) {
+            throw new EntityNotFoundException("Currency {$id} not found");
+        }
+
+        $currency->update([
+            'code' => $dto->code,
+            'name_plural' => $dto->namePlural,
+        ]);
+
+        return $this->toEntity($currency);
+    }
+
+    public function delete(int $id): void
+    {
+        $currency = Currency::query()->find($id);
+
+        if (!$currency) {
+            throw new EntityNotFoundException("Currency {$id} not found");
+        }
+
+        $currency->delete(); // soft delete
+    }
+
+    private function toEntity(Currency $currency): CurrencyEntity
+    {
+        return new CurrencyEntity(
+            id: $currency->id,
+            code: $currency->code,
+            namePlural: $currency->name_plural,
+        );
+    }
+}
+
+✅ 3. Service — прокидывает Entity выше
+
+Service не ловит исключения — это нормально для админки.
+
+📄 app/Services/CurrencyService.php (исправленный)
+<?php
+
+namespace App\Services;
+
+use App\DTO\CurrencyDTO;
+use App\Entities\CurrencyEntity;
+use App\Repositories\CurrencyRepository;
+
+/**
+ * @return CurrencyEntity[]
+ */
+class CurrencyService
+{
+    public function __construct(
+        private readonly CurrencyRepository $repository
+    ) {}
+
+    /**
+     * @return CurrencyEntity[]
+     */
+    public function list(): array
+    {
+        return $this->repository->all();
+    }
+
+    public function create(CurrencyDTO $dto): CurrencyEntity
+    {
+        return $this->repository->create($dto);
+    }
+
+    public function update(int $id, CurrencyDTO $dto): CurrencyEntity
+    {
+        return $this->repository->update($id, $dto);
+    }
+
+    public function delete(int $id): void
+    {
+        $this->repository->delete($id);
+    }
+}
+
+✅ 4. Controller — корректно работает с возвращаемой Entity
+
+Контроллеру не нужно знать, что именно вернулось — но теперь он может, если понадобится.
+
+📄 CurrenciesController.php (фрагменты)
+public function store(CurrencyStoreRequest $request)
+{
+    $dto = new CurrencyDTO(
+        code: $request->string('code'),
+        namePlural: $request->string('name_plural'),
+    );
+
+    $currency = $this->service->create($dto);
+
+    return redirect()
+        ->route('currencies.index')
+        ->with('success', "Валюта {$currency->code} создана");
+}
+
+public function update(CurrencyUpdateRequest $request, int $currency)
+{
+    $dto = new CurrencyDTO(
+        code: $request->string('code'),
+        namePlural: $request->string('name_plural'),
+    );
+
+    $updated = $this->service->update($currency, $dto);
+
+    return redirect()
+        ->route('currencies.index')
+        ->with('success', "Валюта {$updated->code} обновлена");
+}
+
+public function destroy(int $currency)
+{
+    $this->service->delete($currency);
+
+    return redirect()
+        ->route('currencies.index')
+        ->with('success', 'Валюта удалена');
+}
+
+--------------------------------------------------------------------------------
+
+Переходим к шагу 4
+
+--------------------------------------------------------------------------------
+
+ЭТАП 4. Интеграция с FreeCurrencyAPI
+📌 Что реализуем
+
+Абстрактный базовый API-класс на Guzzle
+
+Конкретный запрос FreeCurrencyLatestRequest
+
+Конфигурация через .env
+
+Подготовка к использованию в cron / queue
+
+4.1 Конфигурация API
+📄 .env
+CURRENCIES_API_KEY=your_api_key_here
+CURRENCIES_API_URL=https://api.freecurrencyapi.com
+
+4.2 Базовый абстрактный API-класс
+Требования
+
+Используем Guzzle
+
+Абстрактные методы:
+
+endpoint
+
+query params
+
+Общий метод send()
+
+📄 app/Http/Clients/BaseApiRequest.php
+<?php
+
+namespace App\Http\Clients;
+
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+use RuntimeException;
+
+abstract class BaseApiRequest
+{
+    protected Client $client;
+
+    public function __construct()
+    {
+        $this->client = new Client([
+            'base_uri' => config('services.currency_api.url'),
+            'timeout'  => 10,
+        ]);
+    }
+
+    /**
+     * URI эндпоинта, например: /v1/latest
+     */
+    abstract protected function endpoint(): string;
+
+    /**
+     * Query-параметры запроса
+     */
+    abstract protected function query(): array;
+
+    /**
+     * Выполнение HTTP-запроса
+     */
+    public function send(): array
+    {
+        try {
+            $response = $this->client->get($this->endpoint(), [
+                'headers' => [
+                    'apikey' => config('services.currency_api.key'),
+                    'Accept' => 'application/json',
+                ],
+                'query' => $this->query(),
+            ]);
+        } catch (GuzzleException $e) {
+            throw new RuntimeException(
+                'Currency API request failed: ' . $e->getMessage(),
+                previous: $e
+            );
+        }
+
+        $data = json_decode(
+            $response->getBody()->getContents(),
+            true
+        );
+
+        if (!is_array($data)) {
+            throw new RuntimeException('Invalid API response');
+        }
+
+        return $data;
+    }
+}
+
+4.3 Конкретный запрос FreeCurrencyAPI (latest)
+
+Согласно документации:
+
+GET /v1/latest
+
+📄 app/Http/Clients/FreeCurrencyLatestRequest.php
+<?php
+
+namespace App\Http\Clients;
+
+class FreeCurrencyLatestRequest extends BaseApiRequest
+{
+    protected function endpoint(): string
+    {
+        return '/v1/latest';
+    }
+
+    protected function query(): array
+    {
+        return [
+            // можно добавить base_currency при необходимости
+        ];
+    }
+}
+
+4.4 Конфигурация services.php
+📄 config/services.php
+return [
+
+    // ...
+
+    'currency_api' => [
+        'url' => env('CURRENCIES_API_URL'),
+        'key' => env('CURRENCIES_API_KEY'),
+    ],
+
+];
+
+4.5 Пример ответа API (для понимания)
+{
+  "data": {
+    "USD": 1,
+    "EUR": 0.92,
+    "RUB": 90.21
+  }
+}
+
+
+Мы будем использовать отношение к USD — это важно для шага 6 (конвертация).
+
+4.6 Сервис-обёртка над API (подготовка к cron)
+
+Чтобы job не знал о HTTP, добавляем сервис.
+
+📄 app/Services/CurrencyApiService.php
+<?php
+
+namespace App\Services;
+
+use App\Http\Clients\FreeCurrencyLatestRequest;
+
+class CurrencyApiService
+{
+    public function getLatestRates(): array
+    {
+        $response = (new FreeCurrencyLatestRequest())->send();
+
+        return $response['data'] ?? [];
+    }
+}
+
+
+📌 Возвращает:
+
+[
+    'USD' => 1,
+    'EUR' => 0.92,
+    'RUB' => 90.21,
+]
+
+✅ Итог ЭТАПА 4
+
+✔ Интеграция без готовых SDK
+✔ Использован Guzzle
+✔ Абстрактный базовый класс
+✔ Конкретный API-клиент
+✔ Конфигурация через .env
+✔ Готово к использованию в cron / queue
+✔ Код легко мокается в тестах
+
+--------------------------------------------------------------------------------
+
+правки:
+- от абстрактного BaseApiRequest наследуем абстрактный FreeCurrencyAPI в котором реализуем настройки для конкретного API
+- в BaseApiRequest при формировании new Client base_uri берем из абстрактного метода, который реализуем в FreeCurrencyAPI 
+- timeout вынести в константу DEFAULT_TIMEOUT BaseApiRequest 
+- формирование headers вынести в абстрактный метод и определять в FreeCurrencyAPI 
+- BaseApiRequest не должен знать о деталях реализации. т.е. не упоминать конкретные детали при выбросе исключения
+- наследник FreeCurrencyLatestRequest от FreeCurrencyAPI , метод endpoint (реализовано)
+
+Отличные правки — они идеально вычищают ответственность слоёв 👍
+Ниже — исправленная и финальная версия архитектуры API-клиента, полностью соответствующая твоим требованиям.
+
+Я покажу только актуальные классы в правильной иерархии.
+
+✅ Финальная иерархия API-клиентов
+BaseApiRequest (абстрактный, ничего не знает об API)
+        ↑
+FreeCurrencyAPI (абстрактный, знает про конкретный API)
+        ↑
+FreeCurrencyLatestRequest (конкретный endpoint)
+
+1️⃣ BaseApiRequest — максимально абстрактный
+📄 app/Http/Clients/BaseApiRequest.php
+<?php
+
+namespace App\Http\Clients;
+
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+use RuntimeException;
+
+abstract class BaseApiRequest
+{
+    protected const DEFAULT_TIMEOUT = 10;
+
+    protected Client $client;
+
+    public function __construct()
+    {
+        $this->client = new Client([
+            'base_uri' => $this->baseUri(),
+            'timeout'  => static::DEFAULT_TIMEOUT,
+        ]);
+    }
+
+    /**
+     * Базовый URL API
+     */
+    abstract protected function baseUri(): string;
+
+    /**
+     * HTTP headers
+     */
+    abstract protected function headers(): array;
+
+    /**
+     * Endpoint URI
+     */
+    abstract protected function endpoint(): string;
+
+    /**
+     * Query параметры
+     */
+    abstract protected function query(): array;
+
+    /**
+     * Выполнение запроса
+     */
+    public function send(): array
+    {
+        try {
+            $response = $this->client->get($this->endpoint(), [
+                'headers' => $this->headers(),
+                'query'   => $this->query(),
+            ]);
+        } catch (GuzzleException $e) {
+            throw new RuntimeException(
+                'HTTP request failed',
+                previous: $e
+            );
+        }
+
+        $data = json_decode(
+            $response->getBody()->getContents(),
+            true
+        );
+
+        if (!is_array($data)) {
+            throw new RuntimeException('Invalid HTTP response');
+        }
+
+        return $data;
+    }
+}
+
+✔ Что важно
+
+❌ нет упоминаний FreeCurrency
+
+❌ нет api key / headers
+
+❌ нет конкретных URL
+
+✔ максимально переиспользуемый HTTP-клиент
+
+2️⃣ FreeCurrencyAPI — абстракция конкретного API
+📄 app/Http/Clients/FreeCurrencyAPI.php
+<?php
+
+namespace App\Http\Clients;
+
+abstract class FreeCurrencyAPI extends BaseApiRequest
+{
+    protected function baseUri(): string
+    {
+        return config('services.currency_api.url');
+    }
+
+    protected function headers(): array
+    {
+        return [
+            'apikey' => config('services.currency_api.key'),
+            'Accept' => 'application/json',
+        ];
+    }
+
+    protected function query(): array
+    {
+        return [];
+    }
+}
+
+✔ Здесь теперь:
+
+URL API
+
+API key
+
+headers
+
+общая конфигурация
+
+3️⃣ FreeCurrencyLatestRequest — конкретный endpoint
+📄 app/Http/Clients/FreeCurrencyLatestRequest.php
+<?php
+
+namespace App\Http\Clients;
+
+class FreeCurrencyLatestRequest extends FreeCurrencyAPI
+{
+    protected function endpoint(): string
+    {
+        return '/v1/latest';
+    }
+}
+
+
+📌 Минимальный, чистый, читаемый класс — как и должен быть endpoint.
+
+4️⃣ CurrencyApiService — без изменений (уже корректен)
+📄 app/Services/CurrencyApiService.php
+<?php
+
+namespace App\Services;
+
+use App\Http\Clients\FreeCurrencyLatestRequest;
+
+class CurrencyApiService
+{
+    /**
+     * @return array<string, float>
+     */
+    public function getLatestRates(): array
+    {
+        $response = (new FreeCurrencyLatestRequest())->send();
+
+        return $response['data'] ?? [];
+    }
+}
+
+--------------------------------------------------------------------------------
+
+нужно доработать CurrencyApiService и возвращать массив DTO
+формировать DTO через статический метод fromArray
+
+Отличная правка — логически абсолютно правильная 👍
+HTTP-слой не должен отдавать «сырые массивы», а сразу формировать DTO.
+
+Ниже — аккуратная доработка без слома архитектуры, строго по твоим требованиям.
+
+✅ 1. DTO для курса валют + fromArray
+
+Мы будем возвращать массив DTO, где каждый DTO — курс одной валюты относительно USD.
+
+📄 app/DTO/CurrencyRateDTO.php (доработка)
+<?php
+
+namespace App\DTO;
+
+class CurrencyRateDTO
+{
+    public function __construct(
+        public readonly string $currencyCode,
+        public readonly float $latestExchangeRate,
+    ) {}
+
+    /**
+     * @param array<string, float|int|string> $data
+     * @return self[]
+     */
+    public static function fromArray(array $data): array
+    {
+        $result = [];
+
+        foreach ($data as $code => $rate) {
+            $result[] = new self(
+                currencyCode: (string) $code,
+                latestExchangeRate: (float) $rate,
+            );
+        }
+
+        return $result;
+    }
+}
+
+
+📌 Пример входных данных:
+
+[
+    'USD' => 1,
+    'EUR' => 0.92,
+    'RUB' => 90.21,
+]
+
+
+📌 Результат:
+
+CurrencyRateDTO[]
+
+✅ 2. CurrencyApiService — возвращаем массив DTO
+
+Теперь сервис:
+
+не возвращает массив
+
+не знает о формате API
+
+всегда возвращает CurrencyRateDTO[]
+
+📄 app/Services/CurrencyApiService.php (исправленный)
+<?php
+
+namespace App\Services;
+
+use App\DTO\CurrencyRateDTO;
+use App\Http\Clients\FreeCurrencyLatestRequest;
+
+class CurrencyApiService
+{
+    /**
+     * @return CurrencyRateDTO[]
+     */
+    public function getLatestRates(): array
+    {
+        $response = (new FreeCurrencyLatestRequest())->send();
+
+        if (!isset($response['data']) || !is_array($response['data'])) {
+            return [];
+        }
+
+        return CurrencyRateDTO::fromArray($response['data']);
+    }
+}
+
+✅ 3. Что это даёт архитектурно
+
+✔ HTTP-клиент → только transport
+✔ Service → формирует DTO
+✔ Дальше:
+
+Job → Service → DTO → Repository → Entity
+
+
+✔ DTO легко:
+
+валидировать
+
+логировать
+
+тестировать
+
+мокать
+
+🎯 Как это объяснить на интервью
+
+API-клиент возвращает DTO, сформированные через фабричный метод.
+Это избавляет бизнес-логику от работы с массивами и делает контракт сервиса строгим и типизированным.
+
+Это очень сильный architectural decision.
+
+✅ Итог
+
+✔ CurrencyApiService возвращает CurrencyRateDTO[]
+✔ DTO создаются через fromArray()
+✔ Нет утечки деталей API
+✔ Архитектура становится ещё чище
+
+👉 Следующий шаг
+
+ЭТАП 5 — Обновление курсов валют (cron + queue + retry)
+
+Job UpdateCurrencyRatesJob
+
+Artisan command
+
+Retry через 10 минут
+
+Логирование ошибок
+
+Скажи: «Переходим к шагу 5» 🚀
+
+правки по CurrencyRateDTO
+если ответ не пришел (!isset($response['data']) || !is_array($response['data'])) - выбрасываем исключение и записываем в лог
+DTO формируем не из всего массива а проходимся по data и на основе каждой записи формируем DTO
+если получаем ошибку при формировании dto - выбрасываем исключение и записываем в лог
+
+Отличные правки — это уже production-grade подход 👍
+Давай аккуратно приведём код в соответствие всем требованиям, без нарушения слоёв.
+
+Ниже — итоговая, корректная версия.
+
+✅ 1. CurrencyRateDTO — формирование одного DTO, строгая валидация
+
+DTO не должен знать про массив всего ответа, только про одну запись.
+
+📄 app/DTO/CurrencyRateDTO.php
+<?php
+
+namespace App\DTO;
+
+use InvalidArgumentException;
+
+class CurrencyRateDTO
+{
+    public function __construct(
+        public readonly string $currencyCode,
+        public readonly float $latestExchangeRate,
+    ) {}
+
+    /**
+     * @param string $currencyCode
+     * @param mixed  $rate
+     * @throws InvalidArgumentException
+     */
+    public static function fromItem(string $currencyCode, mixed $rate): self
+    {
+        if ($currencyCode === '') {
+            throw new InvalidArgumentException('Currency code is empty');
+        }
+
+        if (!is_numeric($rate)) {
+            throw new InvalidArgumentException(
+                sprintf('Invalid exchange rate for currency %s', $currencyCode)
+            );
+        }
+
+        return new self(
+            currencyCode: $currencyCode,
+            latestExchangeRate: (float) $rate,
+        );
+    }
+}
+
+
+📌 Важно:
+
+DTO формируется из одной записи
+
+Любая некорректная структура → исключение
+
+DTO не логирует — это задача сервиса
+
+✅ 2. CurrencyApiService — строгая обработка ошибок + логирование
+
+Теперь сервис:
+
+проверяет корректность ответа API
+
+логирует любую ошибку
+
+выбрасывает исключения вверх (для Job retry)
+
+📄 app/Services/CurrencyApiService.php
+<?php
+
+namespace App\Services;
+
+use App\DTO\CurrencyRateDTO;
+use App\Http\Clients\FreeCurrencyLatestRequest;
+use Illuminate\Support\Facades\Log;
+use RuntimeException;
+use Throwable;
+
+class CurrencyApiService
+{
+    /**
+     * @return CurrencyRateDTO[]
+     *
+     * @throws RuntimeException
+     */
+    public function getLatestRates(): array
+    {
+        $response = (new FreeCurrencyLatestRequest())->send();
+
+        if (!isset($response['data']) || !is_array($response['data'])) {
+            Log::error('FreeCurrencyAPI: invalid response structure', [
+                'response' => $response,
+            ]);
+
+            throw new RuntimeException('Invalid response from currency API');
+        }
+
+        $dtos = [];
+
+        foreach ($response['data'] as $currencyCode => $rate) {
+            try {
+                $dtos[] = CurrencyRateDTO::fromItem(
+                    (string) $currencyCode,
+                    $rate
+                );
+            } catch (Throwable $e) {
+                Log::error('Failed to create CurrencyRateDTO', [
+                    'currency' => $currencyCode,
+                    'rate'     => $rate,
+                    'error'    => $e->getMessage(),
+                ]);
+
+                throw new RuntimeException(
+                    'Failed to map currency rate DTO',
+                    previous: $e
+                );
+            }
+        }
+
+        return $dtos;
+    }
+}
+
+✅ 3. Почему это архитектурно правильно
+
+✔ DTO — минимальный контракт
+✔ Сервис:
+
+агрегирует DTO
+
+логирует
+
+выбрасывает исключения
+
+✔ Job / Command сможет:
+
+повторить задачу
+
+корректно упасть
+
+оставить лог
+
+API Client
+   ↓
+Service (валидация + логирование)
+   ↓
+DTO[]
+   ↓
+Repository → Entity
+
+--------------------------------------------------------------------------------
+
+переходим к шагу 5
+
+ЭТАП 5. Обновление курсов (cron + queue)
+Реализовать:
+
+Job: UpdateCurrencyRatesJob
+
+Command: currency:update-rates
+
+Планировщик (Kernel)
+
+Логика:
+
+Запрос к API
+
+Сохранение курсов
+
+Если ошибка:
+
+лог
+
+retry через 10 минут
+
+пример App\Console\Kernel
+    /**
+     * Define the application's command schedule.
+     */
+    protected function schedule(Schedule $schedule): void
+    {
+        $schedule->job(new UpdateCurrencyRatesJob())->dailyAt('0:00')->onOneServer()->withoutOverlapping();
+    }
+
+используем класс CurrencyRateUpdaterService
+в нем используем репозитории Currencies и CurrenciesRates
+
+реализуем метод update, в который передаем массив CurrencyRateDTO
+при обновлении сформируем массив Currencies code - currencies id
+на основе полученного id формируем dto и передаем в CurrenciesRatesRepository
+
+--------------------------------------------------------------------------------
+
+CurrencyRateUpdaterService
+
+Сервис будет:
+
+Принимать массив CurrencyRateDTO
+
+Составлять map code → id для валют
+
+Формировать DTO для CurrencyRateRepository
+
+Вызывать репозиторий для сохранения/обновления
+
+📄 app/Services/CurrencyRateUpdaterService.php
+<?php
+
+namespace App\Services;
+
+use App\DTO\CurrencyRateDTO;
+use App\DTO\CurrencyRateStoreDTO;
+use App\Repositories\CurrencyRepository;
+use App\Repositories\CurrencyRateRepository;
+use Illuminate\Support\Facades\Log;
+use RuntimeException;
+
+class CurrencyRateUpdaterService
+{
+    public function __construct(
+        private readonly CurrencyRepository $currencyRepository,
+        private readonly CurrencyRateRepository $currencyRateRepository
+    ) {}
+
+    /**
+     * @param CurrencyRateDTO[] $rates
+     * @throws RuntimeException
+     */
+    public function update(array $rates): void
+    {
+        try {
+            // Получаем все валюты
+            $currencies = $this->currencyRepository->all();
+
+            // Формируем map: code => id
+            $codeToId = [];
+            foreach ($currencies as $currency) {
+                $codeToId[$currency->code] = $currency->id;
+            }
+
+            foreach ($rates as $rateDto) {
+                /** @var CurrencyRateDTO $rateDto */
+                if (!isset($codeToId[$rateDto->currencyCode])) {
+                    Log::warning(
+                        'Currency not found for rate update',
+                        ['currency' => $rateDto->currencyCode]
+                    );
+                    continue;
+                }
+
+                // Формируем DTO для репозитория
+                $rateStoreDto = new CurrencyRateStoreDTO(
+                    currencyId: $codeToId[$rateDto->currencyCode],
+                    latestExchangeRate: $rateDto->latestExchangeRate
+                );
+
+                $this->currencyRateRepository->updateOrCreate($rateStoreDto);
+            }
+
+            Log::info('Currency rates updated successfully');
+        } catch (\Throwable $e) {
+            Log::error('Failed to update currency rates', ['error' => $e->getMessage()]);
+            throw new RuntimeException('Currency update failed', previous: $e);
+        }
+    }
+}
+
+2️⃣ DTO для сохранения курса
+📄 app/DTO/CurrencyRateStoreDTO.php
+<?php
+
+namespace App\DTO;
+
+class CurrencyRateStoreDTO
+{
+    public function __construct(
+        public readonly int $currencyId,
+        public readonly float $latestExchangeRate
+    ) {}
+}
+
+3️⃣ CurrencyRateRepository — метод updateOrCreate
+/**
+ * @param CurrencyRateStoreDTO $dto
+ */
+public function updateOrCreate(CurrencyRateStoreDTO $dto): void
+{
+    \App\Models\CurrencyRate::query()->updateOrCreate(
+        ['currency_id' => $dto->currencyId],
+        ['latest_exchange_rate' => $dto->latestExchangeRate]
+    );
+}
+
+4️⃣ Job — UpdateCurrencyRatesJob
+
+Job теперь просто получает DTO из API и передает сервису:
+
+<?php
+
+namespace App\Jobs;
+
+use App\Services\CurrencyApiService;
+use App\Services\CurrencyRateUpdaterService;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use RuntimeException;
+
+class UpdateCurrencyRatesJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public int $tries = 3;
+    public int $backoff = 600; // 10 минут
+
+    public function __construct(
+        private readonly CurrencyApiService $apiService,
+        private readonly CurrencyRateUpdaterService $updaterService
+    ) {}
+
+    public function handle(): void
+    {
+        try {
+            $rates = $this->apiService->getLatestRates();
+
+            $this->updaterService->update($rates);
+        } catch (RuntimeException $e) {
+            Log::error('UpdateCurrencyRatesJob failed', ['error' => $e->getMessage()]);
+            throw $e; // retry
+        }
+    }
+}
+
+5️⃣ Планировщик — Kernel
+protected function schedule(Schedule $schedule): void
+{
+    $schedule->job(new UpdateCurrencyRatesJob(
+        app(\App\Services\CurrencyApiService::class),
+        app(\App\Services\CurrencyRateUpdaterService::class)
+    ))
+    ->dailyAt('0:00')
+    ->onOneServer()
+    ->withoutOverlapping();
+}
+
+--------------------------------------------------------------------------------
+
+переходим к этапу 6. по плану Сервис конвертации валют Интерфейс interface CurrencyConverterInterface { public function convert(float $amount, string $from, string $to): float; } Реализация через latest_exchange_rate базовая валюта — USD 📌 Формула: amount_in_usd = amount / from_rate result = amount_in_usd * to_rate
+
+--------------------------------------------------------------------------------
+
+Отлично, переходим к этапу 6 — сервис конвертации валют. Сделаем его строго по ТЗ: интерфейс + реализация через latest_exchange_rate, базовая валюта — USD.
+
+1️⃣ Интерфейс CurrencyConverterInterface
+📄 app/Services/Currency/Interfaces/CurrencyConverterInterface.php
+<?php
+
+namespace App\Services\Currency\Interfaces;
+
+interface CurrencyConverterInterface
+{
+    /**
+     * Конвертация суммы из одной валюты в другую
+     *
+     * @param float  $amount
+     * @param string $from  Код исходной валюты (например, 'EUR')
+     * @param string $to    Код целевой валюты (например, 'RUB')
+     * @return float
+     */
+    public function convert(float $amount, string $from, string $to): float;
+}
+
+2️⃣ Реализация CurrencyConverter
+
+Логика:
+
+Получаем курсы from и to через CurrencyRateRepository
+
+Рассчитываем через базовую валюту USD:
+
+amount_in_usd = amount / from_rate
+result = amount_in_usd * to_rate
+
+📄 app/Services/Currency/CurrencyConverter.php
+<?php
+
+namespace App\Services\Currency;
+
+use App\Repositories\CurrencyRateRepository;
+use App\Services\Currency\Interfaces\CurrencyConverterInterface;
+use RuntimeException;
+
+class CurrencyConverter implements CurrencyConverterInterface
+{
+    public function __construct(
+        private readonly CurrencyRateRepository $currencyRateRepository
+    ) {}
+
+    public function convert(float $amount, string $from, string $to): float
+    {
+        $fromRate = $this->currencyRateRepository->getLatestRateByCode($from);
+        $toRate   = $this->currencyRateRepository->getLatestRateByCode($to);
+
+        if ($fromRate === null) {
+            throw new RuntimeException("Currency rate not found for '{$from}'");
+        }
+
+        if ($toRate === null) {
+            throw new RuntimeException("Currency rate not found for '{$to}'");
+        }
+
+        // Формула через USD
+        $amountInUsd = $amount / $fromRate;
+        $result = $amountInUsd * $toRate;
+
+        return round($result, 4); // округление до 4 знаков
+    }
+}
+
+3️⃣ Репозиторий — метод getLatestRateByCode
+
+Добавим метод в CurrencyRateRepository:
+
+/**
+ * Получить курс валюты к USD по коду валюты
+ *
+ * @param string $code
+ * @return float|null
+ */
+public function getLatestRateByCode(string $code): ?float
+{
+    $currency = \App\Models\Currency::query()
+        ->where('code', $code)
+        ->first();
+
+    if (!$currency) {
+        return null;
+    }
+
+    $rate = \App\Models\CurrencyRate::query()
+        ->where('currency_id', $currency->id)
+        ->latest()
+        ->first();
+
+    return $rate?->latest_exchange_rate;
+}
+
+4️⃣ Пример использования
+$converter = app(\App\Services\Currency\CurrencyConverter::class);
+
+$amountInRub = $converter->convert(100, 'USD', 'RUB');
+$amountInEur = $converter->convert(100, 'USD', 'EUR');
+
+
+--------------------------------------------------------------------------------
+
+переходим к 7 этапу план: ЭТАП 7. Публичный API (v1) Endpoint POST /api/v1/convert Controller CurrencyConvertController Request validation Response { "amount": 100, "from": "USD", "to": "EUR", "result": 92.34 сформировать кастомный реквест в котором проверять существование валют по коду в БД в контроллере формировать dto dto передавать в сервис из сервиса возвращать dto с параметрами запроса и результатом
+
+--------------------------------------------------------------------------------
+
+DTO для запроса и ответа
+📄 app/DTO/CurrencyConvertRequestDTO.php
+<?php
+
+namespace App\DTO;
+
+class CurrencyConvertRequestDTO
+{
+    public function __construct(
+        public readonly float $amount,
+        public readonly string $from,
+        public readonly string $to
+    ) {}
+}
+
+📄 app/DTO/CurrencyConvertResponseDTO.php
+<?php
+
+namespace App\DTO;
+
+class CurrencyConvertResponseDTO
+{
+    public function __construct(
+        public readonly float $amount,
+        public readonly string $from,
+        public readonly string $to,
+        public readonly float $result
+    ) {}
+}
+
+2️⃣ Кастомный Request
+
+Реализуем проверку существования валют в базе.
+
+📄 app/Http/Requests/CurrencyConvertRequest.php
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+use App\Models\Currency;
+
+class CurrencyConvertRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'amount' => ['required','numeric','min:0'],
+            'from'   => ['required','string','exists:currencies,code'],
+            'to'     => ['required','string','exists:currencies,code'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'from.exists' => 'Исходная валюта не найдена',
+            'to.exists'   => 'Целевая валюта не найдена',
+        ];
+    }
+
+    public function toDTO(): \App\DTO\CurrencyConvertRequestDTO
+    {
+        return new \App\DTO\CurrencyConvertRequestDTO(
+            amount: (float) $this->input('amount'),
+            from: $this->input('from'),
+            to: $this->input('to')
+        );
+    }
+}
+
+3️⃣ Контроллер CurrencyConvertController
+📄 app/Http/Controllers/Api/V1/CurrencyConvertController.php
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\CurrencyConvertRequest;
+use App\Services\Currency\CurrencyConverter;
+use App\DTO\CurrencyConvertResponseDTO;
+
+class CurrencyConvertController extends Controller
+{
+    public function __construct(
+        private readonly CurrencyConverter $converter
+    ) {}
+
+    public function __invoke(CurrencyConvertRequest $request)
+    {
+        $dto = $request->toDTO();
+
+        $result = $this->converter->convert(
+            $dto->amount,
+            $dto->from,
+            $dto->to
+        );
+
+        $responseDto = new CurrencyConvertResponseDTO(
+            amount: $dto->amount,
+            from: $dto->from,
+            to: $dto->to,
+            result: $result
+        );
+
+        return response()->json([
+            'amount' => $responseDto->amount,
+            'from'   => $responseDto->from,
+            'to'     => $responseDto->to,
+            'result' => $responseDto->result,
+        ]);
+    }
+}
+
+4️⃣ API Route
+📄 routes/api.php
+use App\Http\Controllers\Api\V1\CurrencyConvertController;
+
+Route::prefix('v1')->group(function () {
+    Route::post('/convert', CurrencyConvertController::class);
+});
+
+--------------------------------------------------------------------------------
+
+переходим к ЭТАП 8. Сиды CurrencySeeder загрузка списка валют источник: docs freecurrencyapi UserSeeder login: admin password: admin (bcrypt) role: admin список валют в ассоциативный массив вида код => название валюты которые должны быть добавлены в БД Currency List Code Name EUR Euro USD US Dollar JPY Japanese Yen BGN Bulgarian Lev CZK Czech Republic Koruna DKK Danish Krone GBP British Pound Sterling HUF Hungarian Forint PLN Polish Zloty RON Romanian Leu SEK Swedish Krona CHF Swiss Franc ISK Icelandic Króna NOK Norwegian Krone HRK Croatian Kuna RUB Russian Ruble TRY Turkish Lira AUD Australian Dollar BRL Brazilian Real CAD Canadian Dollar CNY Chinese Yuan HKD Hong Kong Dollar IDR Indonesian Rupiah ILS Israeli New Sheqel INR Indian Rupee KRW South Korean Won MXN Mexican Peso MYR Malaysian Ringgit NZD New Zealand Dollar PHP Philippine Peso SGD Singapore Dollar THB Thai Baht ZAR South African Rand
+
+
+--------------------------------------------------------------------------------
+
+
+CurrencySeeder
+
+Сид загружает фиксированный список валют в таблицу currencies.
+
+📄 database/seeders/CurrencySeeder.php
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\Currency;
+
+class CurrencySeeder extends Seeder
+{
+    public function run(): void
+    {
+        $currencies = [
+    'EUR' => 'Euro',
+    'USD' => 'US Dollar',
+    'JPY' => 'Japanese Yen',
+    'BGN' => 'Bulgarian Lev',
+    'CZK' => 'Czech Republic Koruna',
+    'DKK' => 'Danish Krone',
+    'GBP' => 'British Pound Sterling',
+    'HUF' => 'Hungarian Forint',
+    'PLN' => 'Polish Zloty',
+    'RON' => 'Romanian Leu',
+    'SEK' => 'Swedish Krona',
+    'CHF' => 'Swiss Franc',
+    'ISK' => 'Icelandic Króna',
+    'NOK' => 'Norwegian Krone',
+    'HRK' => 'Croatian Kuna',
+    'RUB' => 'Russian Ruble',
+    'TRY' => 'Turkish Lira',
+    'AUD' => 'Australian Dollar',
+    'BRL' => 'Brazilian Real',
+    'CAD' => 'Canadian Dollar',
+    'CNY' => 'Chinese Yuan',
+    'HKD' => 'Hong Kong Dollar',
+    'IDR' => 'Indonesian Rupiah',
+    'ILS' => 'Israeli New Sheqel',
+    'INR' => 'Indian Rupee',
+    'KRW' => 'South Korean Won',
+    'MXN' => 'Mexican Peso',
+    'MYR' => 'Malaysian Ringgit',
+    'NZD' => 'New Zealand Dollar',
+    'PHP' => 'Philippine Peso',
+    'SGD' => 'Singapore Dollar',
+    'THB' => 'Thai Baht',
+    'ZAR' => 'South African Rand',
+];
+
+foreach ($currencies as $code => $name) {
+    Currency::updateOrCreate(
+        ['code' => $code],
+        ['name_plural' => $name]
+    );
+}
+    }
+}
+
+2️⃣ UserSeeder
+
+Создаем администратора:
+
+login: admin
+
+password: admin (bcrypt)
+
+role: admin
+
+📄 database/seeders/UserSeeder.php
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+
+class UserSeeder extends Seeder
+{
+    public function run(): void
+    {
+        User::updateOrCreate(
+            ['login' => 'admin'],
+            [
+                'password' => Hash::make('admin'),
+                'role' => 'admin',
+            ]
+        );
+    }
+}
+
+3️⃣ DatabaseSeeder
+
+Не забудем подключить оба сидера:
+
+📄 database/seeders/DatabaseSeeder.php
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+
+class DatabaseSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $this->call([
+            CurrencySeeder::class,
+            UserSeeder::class,
+        ]);
+    }
+}
+
+
+--------------------------------------------------------------------------------
+
