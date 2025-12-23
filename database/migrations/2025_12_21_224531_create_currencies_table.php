@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('currencies', function (Blueprint $table) {
             $table->id();
-            $table->string('code', 8)->unique();
+            $table->string('code', 8)->collation('utf8mb4_unicode_ci')->unique();
             $table->string('name_plural', 32);
             $table->timestamps();
             $table->softDeletes();

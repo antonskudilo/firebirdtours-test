@@ -16,8 +16,8 @@ readonly class CurrencyConvertRequestDTO
     {
         return new static(
             amount: $request->validated('amount'),
-            from: $request->validated('from'),
-            to: $request->validated('to'),
+            from: strtoupper($request->validated('from')),
+            to: strtoupper($request->validated('to')),
         );
     }
 }

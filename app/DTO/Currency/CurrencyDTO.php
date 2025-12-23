@@ -18,7 +18,7 @@ readonly class CurrencyDTO
     public static function fromRequest(CurrencyRequestInterface $request): static
     {
         return new static(
-            code: $request->getCode(),
+            code: strtoupper($request->getCode()),
             namePlural: $request->getNamePlural(),
         );
     }
