@@ -11,6 +11,7 @@ return new class extends Migration {
             $table->id();
 
             $table->foreignId('currency_id')
+                ->unique()
                 ->index()
                 ->constrained('currencies')
                 ->cascadeOnDelete();

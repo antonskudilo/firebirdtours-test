@@ -9,29 +9,20 @@ use App\Exceptions\CurrencyRateNotFoundException;
 readonly class CurrencyConverterService
 {
     public function __construct(
-        private CurrencyService $currencyService,
+        private CurrencyRateService $currencyRateService,
     ) {}
 
     /**
      * @param CurrencyConvertRequestDTO $dto
      * @param int $precision
+     * @throws CurrencyRateNotFoundException
      * @return CurrencyConvertResponseDTO
      */
     public function convert(CurrencyConvertRequestDTO $dto, int $precision = 4): CurrencyConvertResponseDTO
     {
-        $fromRate = $this->currencyService->findByCode($dto->from)->latest_exchange_rate;
-        $toRate = $this->currencyService->findByCode($dto->to)->latest_exchange_rate;
-
-        if (!isset($fromRate)) {
-            throw new CurrencyRateNotFoundException("Currency rate not found for '$dto->from'");
-        }
-
-        if (!isset($toRate)) {
-            throw new CurrencyRateNotFoundException("Currency rate not found for '$dto->to'");
-        }
-
-        $amountInUsd = $dto->amount / $fromRate;
-        $result = round($amountInUsd * $toRate, $precision);
+        $currencyPairRate = $this->currencyRateService->getCurrencyPairRateByCodes($dto->from, $dto->to);
+        $amountInUsd = $dto->amount / $currencyPairRate->fromRate;
+        $result = round($amountInUsd * $currencyPairRate->toRate, $precision);
 
         return new CurrencyConvertResponseDTO(
             amount: $dto->amount,

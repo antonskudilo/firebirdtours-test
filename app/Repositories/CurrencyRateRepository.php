@@ -2,9 +2,12 @@
 
 namespace App\Repositories;
 
+use App\DTO\CurrencyRate\CurrencyPairRateDTO;
 use App\DTO\CurrencyRate\CurrencyRateUpdateDTO;
 use App\Entities\CurrencyRateEntity;
+use App\Exceptions\CurrencyRateNotFoundException;
 use App\Models\CurrencyRate;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @return CurrencyRateEntity[]
@@ -38,6 +41,41 @@ class CurrencyRateRepository
         );
 
         return $this->toEntity($currencyRate);
+    }
+
+    /**
+     * @param string $fromCode
+     * @param string $toCode
+     * @throws CurrencyRateNotFoundException
+     * @return CurrencyPairRateDTO
+     */
+    public function getCurrencyPairRateByCodes(string $fromCode, string $toCode): CurrencyPairRateDTO
+    {
+        $rows = DB::table('currencies as c')
+            ->join('currency_rates as r', 'r.currency_id', '=', 'c.id')
+            ->whereIn('c.code', [$fromCode, $toCode])
+            ->whereNull('c.deleted_at')
+            ->select([
+                'c.code',
+                'r.latest_exchange_rate',
+            ])
+            ->get()
+            ->keyBy('code');
+
+        if (!$rows->has($fromCode)) {
+            throw new CurrencyRateNotFoundException("Currency rate not found for '$fromCode'");
+        }
+
+        if (!$rows->has($toCode)) {
+            throw new CurrencyRateNotFoundException("Currency rate not found for '$toCode'");
+        }
+
+        return new CurrencyPairRateDTO(
+            fromCode: $fromCode,
+            toCode: $toCode,
+            fromRate: $rows[$fromCode]->latest_exchange_rate,
+            toRate: $rows[$toCode]->latest_exchange_rate,
+        );
     }
 
     /**
