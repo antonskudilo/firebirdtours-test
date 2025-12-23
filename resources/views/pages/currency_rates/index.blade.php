@@ -4,15 +4,15 @@
 
 @extends('layouts.app')
 
-@section('title', 'Курсы валют')
+@section('title', __('pages.currency_rates.index'))
 
 @section('content')
     <table class="table table-striped">
         <tr>
-            <th>Code</th>
-            <th>Name</th>
-            <th>Rate (USD)</th>
-            <th>Updated</th>
+            <th>@lang('pages/currency_rates.fields.code')</th>
+            <th>@lang('pages/currency_rates.fields.name')</th>
+            <th>@lang('pages/currency_rates.fields.rate')</th>
+            <th>@lang('pages/currency_rates.fields.updated')</th>
         </tr>
 
         @foreach($rates as $rate)

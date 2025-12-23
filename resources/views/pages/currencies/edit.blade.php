@@ -4,7 +4,7 @@
 
 @extends('layouts.app')
 
-@section('title', 'Редактирование валюты')
+@section('title', __('pages.currencies.edit'))
 
 @section('content')
     <form method="POST" action="{{ route('currencies.update', $currency->id) }}">
@@ -12,12 +12,12 @@
         @method('PUT')
 
         <div class="mb-3">
-            <label for="code" class="form-label">Code</label>
+            <label for="code" class="form-label">@lang('pages/currencies.fields.code')</label>
             <input name="code" id="code" class="form-control" value="{{ old('code', $currency->code) }}" required>
         </div>
 
         <div class="mb-3">
-            <label for="name_plural" class="form-label">Name plural</label>
+            <label for="name_plural" class="form-label">@lang('pages/currencies.fields.name')</label>
 
             <input
                 id="name_plural"
@@ -28,6 +28,6 @@
             >
         </div>
 
-        <button class="btn btn-primary">Сохранить</button>
+        <button class="btn btn-primary">@lang('actions.submit')</button>
     </form>
 @endsection
