@@ -1,0 +1,143 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "FirebirdTours API",
+        "description": "Документация публичного API FirebirdTours",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/v1/convert": {
+            "post": {
+                "tags": [
+                    "Currency"
+                ],
+                "summary": "Конвертация валют",
+                "description": "Конвертирует сумму из одной валюты в другую",
+                "operationId": "675c2c558293d00069fedf401ed1b98a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CurrencyConvertRequestDTO"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Успешная конвертация",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CurrencyConvertResponseDTO"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "amount": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The amount must be at least 0."
+                                                    }
+                                                },
+                                                "from": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Исходная валюта не найдена"
+                                                    }
+                                                },
+                                                "to": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Целевая валюта не найдена"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "CurrencyConvertRequestDTO": {
+                "required": [
+                    "amount",
+                    "from",
+                    "to"
+                ],
+                "properties": {
+                    "amount": {
+                        "description": "Сумма для конвертации",
+                        "type": "number",
+                        "format": "float",
+                        "example": 100
+                    },
+                    "from": {
+                        "description": "Код исходной валюты",
+                        "type": "string",
+                        "example": "USD"
+                    },
+                    "to": {
+                        "description": "Код целевой валюты",
+                        "type": "string",
+                        "example": "EUR"
+                    }
+                },
+                "type": "object"
+            },
+            "CurrencyConvertResponseDTO": {
+                "properties": {
+                    "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 100
+                    },
+                    "from": {
+                        "type": "string",
+                        "example": "USD"
+                    },
+                    "to": {
+                        "type": "string",
+                        "example": "EUR"
+                    },
+                    "result": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 85.5
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Currency",
+            "description": "Currency"
+        }
+    ]
+}
