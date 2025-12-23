@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Jobs\UpdateCurrencyRatesJob;
-use App\Services\CurrencyApiService;
-use App\Services\CurrencyRateUpdaterService;
+use App\Services\Currency\CurrencyApiService;
+use App\Services\CurrencyRate\CurrencyRateUpdaterService;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Command\Command as CommandAlias;
 

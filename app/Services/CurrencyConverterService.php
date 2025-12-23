@@ -5,6 +5,7 @@ namespace App\Services;
 use App\DTO\CurrencyConvert\CurrencyConvertRequestDTO;
 use App\DTO\CurrencyConvert\CurrencyConvertResponseDTO;
 use App\Exceptions\CurrencyRateNotFoundException;
+use App\Services\CurrencyRate\CurrencyRateService;
 
 readonly class CurrencyConverterService
 {

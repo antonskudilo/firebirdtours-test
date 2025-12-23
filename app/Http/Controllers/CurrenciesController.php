@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\DTO\Currency\CurrencyDTO;
 use App\Http\Requests\Currency\CurrencyStoreRequest;
 use App\Http\Requests\Currency\CurrencyUpdateRequest;
-use App\Services\CurrencyService;
+use App\Services\Currency\CurrencyService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 

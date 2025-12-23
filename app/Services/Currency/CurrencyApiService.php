@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Currency;
 
 use App\DTO\CurrencyRate\CurrencyRateDTO;
 use App\Http\Clients\FreeCurrencyAPI\FreeCurrencyLatestRequest;

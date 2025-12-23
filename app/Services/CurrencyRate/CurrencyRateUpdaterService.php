@@ -1,16 +1,18 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\CurrencyRate;
 
 use App\DTO\CurrencyRate\CurrencyRateDTO;
 use App\DTO\CurrencyRate\CurrencyRateUpdateDTO;
+use App\Services\Currency\CurrencyService;
 use RuntimeException;
 
 readonly class CurrencyRateUpdaterService
 {
     public function __construct(
         private CurrencyService     $currencyService,
-        private CurrencyRateService $currencyRateService
+        private CurrencyRateService $currencyRateService,
+        private CurrencyRateCache   $cache
     ) {}
 
     /**
@@ -31,6 +33,8 @@ readonly class CurrencyRateUpdaterService
                 latestExchangeRate: $rateDto->latestExchangeRate
             );
         }
+
+        $this->cache->flush();
     }
 
     /**

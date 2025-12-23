@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Services\CurrencyApiService;
-use App\Services\CurrencyRateUpdaterService;
+use App\Services\Currency\CurrencyApiService;
+use App\Services\CurrencyRate\CurrencyRateUpdaterService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

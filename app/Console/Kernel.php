@@ -3,10 +3,10 @@
 namespace App\Console;
 
 use App\Jobs\UpdateCurrencyRatesJob;
-use App\Services\CurrencyApiService;
-use App\Services\CurrencyRateUpdaterService;
-use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use App\Services\Currency\CurrencyApiService;
+use App\Services\CurrencyRate\CurrencyRateUpdaterService;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
 class Kernel extends ConsoleKernel
 {

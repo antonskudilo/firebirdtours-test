@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Currency;
 
 use App\DTO\Currency\CurrencyDTO;
 use App\Entities\CurrencyEntity;

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\CurrencyRateService;
+use App\Services\CurrencyRate\CurrencyRateService;
 use Illuminate\View\View;
 
 class CurrencyRatesController extends Controller

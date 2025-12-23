@@ -7,7 +7,7 @@ use App\DTO\CurrencyConvert\CurrencyConvertResponseDTO;
 use App\DTO\CurrencyRate\CurrencyPairRateDTO;
 use App\Exceptions\CurrencyRateNotFoundException;
 use App\Services\CurrencyConverterService;
-use App\Services\CurrencyRateService;
+use App\Services\CurrencyRate\CurrencyRateService;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
