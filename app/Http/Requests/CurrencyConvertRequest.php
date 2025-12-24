@@ -23,8 +23,8 @@ class CurrencyConvertRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'from.exists' => 'Исходная валюта не найдена',
-            'to.exists' => 'Целевая валюта не найдена',
+            'from.exists' => 'Source currency not found',
+            'to.exists' => 'Target currency not found',
         ];
     }
 }

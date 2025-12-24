@@ -4,9 +4,9 @@ namespace App\Swagger;
 
 /**
  * @OA\Info(
- *     title="FirebirdTours API",
+ *     title="Currency Conversion API",
  *     version="1.0.0",
- *     description="Документация публичного API FirebirdTours"
+ *     description="Public API documentation created as part of the FirebirdTours test assignment"
  * )
  */
 class SwaggerInfo

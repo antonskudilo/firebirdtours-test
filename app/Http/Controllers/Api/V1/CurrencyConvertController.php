@@ -8,12 +8,11 @@ use App\Http\Requests\CurrencyConvertRequest;
 use App\Services\CurrencyConverterService;
 use Illuminate\Http\JsonResponse;
 
-
 /**
  * @OA\Post(
  *     path="/api/v1/convert",
- *     summary="Конвертация валют",
- *     description="Конвертирует сумму из одной валюты в другую",
+ *     summary="Currency conversion",
+ *     description="Converts an amount from one currency to another",
  *     tags={"Currency"},
  *     @OA\RequestBody(
  *         required=true,
@@ -21,12 +20,12 @@ use Illuminate\Http\JsonResponse;
  *     ),
  *     @OA\Response(
  *         response=200,
- *         description="Успешная конвертация",
+ *         description="Successful conversion",
  *         @OA\JsonContent(ref="#/components/schemas/CurrencyConvertResponseDTO")
  *     ),
  *     @OA\Response(
  *         response=422,
- *         description="Ошибка валидации",
+ *         description="Validation error",
  *         @OA\JsonContent(
  *             @OA\Property(property="message", type="string", example="The given data was invalid."),
  *             @OA\Property(
@@ -40,12 +39,12 @@ use Illuminate\Http\JsonResponse;
  *                 @OA\Property(
  *                     property="from",
  *                     type="array",
- *                     @OA\Items(type="string", example="Исходная валюта не найдена")
+ *                     @OA\Items(type="string", example="Source currency not found")
  *                 ),
  *                 @OA\Property(
  *                     property="to",
  *                     type="array",
- *                     @OA\Items(type="string", example="Целевая валюта не найдена")
+ *                     @OA\Items(type="string", example="Target currency not found")
  *                 )
  *             )
  *         )

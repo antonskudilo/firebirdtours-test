@@ -1,8 +1,8 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "FirebirdTours API",
-        "description": "Документация публичного API FirebirdTours",
+        "title": "Currency Conversion API",
+        "description": "Public API documentation created as part of the FirebirdTours test assignment",
         "version": "1.0.0"
     },
     "paths": {
@@ -11,8 +11,8 @@
                 "tags": [
                     "Currency"
                 ],
-                "summary": "Конвертация валют",
-                "description": "Конвертирует сумму из одной валюты в другую",
+                "summary": "Currency conversion",
+                "description": "Converts an amount from one currency to another",
                 "operationId": "675c2c558293d00069fedf401ed1b98a",
                 "requestBody": {
                     "required": true,
@@ -26,7 +26,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Успешная конвертация",
+                        "description": "Successful conversion",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -36,7 +36,7 @@
                         }
                     },
                     "422": {
-                        "description": "Ошибка валидации",
+                        "description": "Validation error",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -58,14 +58,14 @@
                                                     "type": "array",
                                                     "items": {
                                                         "type": "string",
-                                                        "example": "Исходная валюта не найдена"
+                                                        "example": "Source currency not found"
                                                     }
                                                 },
                                                 "to": {
                                                     "type": "array",
                                                     "items": {
                                                         "type": "string",
-                                                        "example": "Целевая валюта не найдена"
+                                                        "example": "Target currency not found"
                                                     }
                                                 }
                                             },
