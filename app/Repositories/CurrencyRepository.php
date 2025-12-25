@@ -15,6 +15,7 @@ class CurrencyRepository
     /**
      * @param int $id
      * @return CurrencyEntity
+     * @throws EntityNotFoundException
      */
     public function find(int $id): CurrencyEntity
     {
@@ -31,6 +32,7 @@ class CurrencyRepository
 
     /**
      * @param string $code
+     * @throws EntityNotFoundException
      * @return CurrencyEntity
      */
     public function findByCode(string $code): CurrencyEntity

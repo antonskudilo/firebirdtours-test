@@ -16,8 +16,8 @@ readonly class CurrencyConverterService
     /**
      * @param CurrencyConvertRequestDTO $dto
      * @param int $precision
-     * @throws CurrencyRateNotFoundException
      * @return CurrencyConvertResponseDTO
+     * @throws CurrencyRateNotFoundException
      */
     public function convert(CurrencyConvertRequestDTO $dto, int $precision = 4): CurrencyConvertResponseDTO
     {

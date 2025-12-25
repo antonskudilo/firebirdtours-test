@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Services\CurrencyRate\CurrencyRateUpdaterService;
+use App\Facades\CurrencyFacade;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -18,14 +18,10 @@ class UpdateCurrencyRatesJob implements ShouldQueue
     public int $tries = 3;
     public int $backoff = 600;
 
-    public function __construct(
-        private readonly CurrencyRateUpdaterService $updaterService
-    ) {}
-
-    public function handle(): void
+    public function handle(CurrencyFacade $facade): void
     {
         try {
-            $this->updaterService->update();
+            $facade->refreshRates();
         } catch (RuntimeException $e) {
             Log::error('UpdateCurrencyRatesJob failed', ['error' => $e->getMessage()]);
 

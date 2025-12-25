@@ -2,8 +2,8 @@
 
 namespace App\Console;
 
+use App\Facades\CurrencyFacade;
 use App\Jobs\UpdateCurrencyRatesJob;
-use App\Services\CurrencyRate\CurrencyRateUpdaterService;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -14,9 +14,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->job(new UpdateCurrencyRatesJob(
-            app(CurrencyRateUpdaterService::class)
-        ))
+        $schedule->job(new UpdateCurrencyRatesJob())
             ->dailyAt('0:00')
             ->onOneServer()
             ->withoutOverlapping();

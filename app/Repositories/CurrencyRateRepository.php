@@ -35,19 +35,21 @@ class CurrencyRateRepository
      */
     public function batchUpdate(array $items): void
     {
+        $now = now();
         $rows = [];
 
         foreach ($items as $item) {
             $rows[] = [
                 'currency_id' => $item->currencyId,
                 'latest_exchange_rate' => $item->latestExchangeRate,
+                'updated_at' => $now,
             ];
         }
 
         DB::table('currency_rates')->upsert(
             $rows,
             ['currency_id'],
-            ['latest_exchange_rate']
+            ['latest_exchange_rate', 'updated_at']
         );
     }
 

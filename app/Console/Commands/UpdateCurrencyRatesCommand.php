@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Facades\CurrencyFacade;
 use App\Jobs\UpdateCurrencyRatesJob;
-use App\Services\CurrencyRate\CurrencyRateUpdaterService;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Command\Command as CommandAlias;
 
@@ -25,7 +25,7 @@ class UpdateCurrencyRatesCommand extends Command
 
         try {
             UpdateCurrencyRatesJob::dispatch(
-                app(CurrencyRateUpdaterService::class)
+                app(CurrencyFacade::class)
             );
         } catch (\Exception $e) {
             $this->error('Failed to dispatch UpdateCurrencyRatesJob: ' . $e->getMessage());

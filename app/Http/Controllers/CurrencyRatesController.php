@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\CurrencyRate\CurrencyRateService;
+use App\Facades\CurrencyFacade;
 use Illuminate\View\View;
 
 class CurrencyRatesController extends Controller
 {
     public function __construct(
-        private readonly CurrencyRateService $service
+        private readonly CurrencyFacade $facade
     ) {}
 
     /**
@@ -17,7 +17,7 @@ class CurrencyRatesController extends Controller
     public function index(): View
     {
         return view('pages.currency_rates.index', [
-            'rates' => $this->service->list(),
+            'rates' => $this->facade->listRates(),
         ]);
     }
 }

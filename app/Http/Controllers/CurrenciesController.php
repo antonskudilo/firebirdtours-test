@@ -3,16 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\DTO\Currency\CurrencyDTO;
+use App\Facades\CurrencyFacade;
 use App\Http\Requests\Currency\CurrencyStoreRequest;
 use App\Http\Requests\Currency\CurrencyUpdateRequest;
-use App\Repositories\CurrencyRepository;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class CurrenciesController extends Controller
 {
     public function __construct(
-        private readonly CurrencyRepository $repository
+        private readonly CurrencyFacade $facade
     ) {}
 
     /**
@@ -21,7 +21,7 @@ class CurrenciesController extends Controller
     public function index(): View
     {
         return view('pages.currencies.index', [
-            'currencies' => $this->repository->all(),
+            'currencies' => $this->facade->listCurrencies(),
         ]);
     }
 
@@ -39,7 +39,7 @@ class CurrenciesController extends Controller
      */
     public function store(CurrencyStoreRequest $request): RedirectResponse
     {
-        $currency = $this->repository->create(
+        $currency = $this->facade->createCurrency(
             CurrencyDTO::fromRequest($request)
         );
 
@@ -55,7 +55,7 @@ class CurrenciesController extends Controller
     public function edit(int $id): View
     {
         return view('pages.currencies.edit', [
-            'currency' => $this->repository->find($id),
+            'currency' => $this->facade->findCurrency($id),
         ]);
     }
 
@@ -66,7 +66,7 @@ class CurrenciesController extends Controller
      */
     public function update(CurrencyUpdateRequest $request, int $id): RedirectResponse
     {
-        $this->repository->update($id, CurrencyDTO::fromRequest($request));
+        $this->facade->updateCurrency($id, CurrencyDTO::fromRequest($request));
 
         return redirect()
             ->route('currencies.index')
@@ -79,7 +79,7 @@ class CurrenciesController extends Controller
      */
     public function destroy(int $id): RedirectResponse
     {
-        $this->repository->delete($id);
+        $this->facade->deleteCurrency($id);
 
         return redirect()
             ->route('currencies.index')
