@@ -5,14 +5,14 @@ namespace App\Http\Controllers;
 use App\DTO\Currency\CurrencyDTO;
 use App\Http\Requests\Currency\CurrencyStoreRequest;
 use App\Http\Requests\Currency\CurrencyUpdateRequest;
-use App\Services\Currency\CurrencyService;
+use App\Repositories\CurrencyRepository;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class CurrenciesController extends Controller
 {
     public function __construct(
-        private readonly CurrencyService $service
+        private readonly CurrencyRepository $repository
     ) {}
 
     /**
@@ -21,7 +21,7 @@ class CurrenciesController extends Controller
     public function index(): View
     {
         return view('pages.currencies.index', [
-            'currencies' => $this->service->list(),
+            'currencies' => $this->repository->all(),
         ]);
     }
 
@@ -39,13 +39,13 @@ class CurrenciesController extends Controller
      */
     public function store(CurrencyStoreRequest $request): RedirectResponse
     {
-        $currency = $this->service->create(
+        $currency = $this->repository->create(
             CurrencyDTO::fromRequest($request)
         );
 
         return redirect()
             ->route('currencies.index')
-            ->with('success', "Валюта {$currency->code} создана");
+            ->with('success', "Валюта $currency->code создана");
     }
 
     /**
@@ -55,7 +55,7 @@ class CurrenciesController extends Controller
     public function edit(int $id): View
     {
         return view('pages.currencies.edit', [
-            'currency' => $this->service->find($id),
+            'currency' => $this->repository->find($id),
         ]);
     }
 
@@ -66,7 +66,7 @@ class CurrenciesController extends Controller
      */
     public function update(CurrencyUpdateRequest $request, int $id): RedirectResponse
     {
-        $this->service->update($id, CurrencyDTO::fromRequest($request));
+        $this->repository->update($id, CurrencyDTO::fromRequest($request));
 
         return redirect()
             ->route('currencies.index')
@@ -79,7 +79,7 @@ class CurrenciesController extends Controller
      */
     public function destroy(int $id): RedirectResponse
     {
-        $this->service->delete($id);
+        $this->repository->delete($id);
 
         return redirect()
             ->route('currencies.index')

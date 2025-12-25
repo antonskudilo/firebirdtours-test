@@ -3,6 +3,7 @@
 namespace App\Services\CurrencyRate;
 
 use App\DTO\CurrencyRate\CurrencyPairRateDTO;
+use App\DTO\CurrencyRate\CurrencyRateBatchUpdateDTO;
 use App\DTO\CurrencyRate\CurrencyRateUpdateDTO;
 use App\Entities\CurrencyRateEntity;
 use App\Repositories\CurrencyRateRepository;
@@ -31,6 +32,15 @@ readonly class CurrencyRateService
     public function update(CurrencyRateUpdateDTO $dto): CurrencyRateEntity
     {
         return $this->repository->update($dto);
+    }
+
+    /**
+     * @param CurrencyRateBatchUpdateDTO $dto
+     * @return void
+     */
+    public function batchUpdate(CurrencyRateBatchUpdateDTO $dto): void
+    {
+        $this->repository->batchUpdate($dto->items);
     }
 
     /**

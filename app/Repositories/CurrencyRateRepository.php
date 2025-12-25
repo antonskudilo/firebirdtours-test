@@ -30,6 +30,28 @@ class CurrencyRateRepository
     }
 
     /**
+     * @param CurrencyRateUpdateDTO[] $items
+     * @return void
+     */
+    public function batchUpdate(array $items): void
+    {
+        $rows = [];
+
+        foreach ($items as $item) {
+            $rows[] = [
+                'currency_id' => $item->currencyId,
+                'latest_exchange_rate' => $item->latestExchangeRate,
+            ];
+        }
+
+        DB::table('currency_rates')->upsert(
+            $rows,
+            ['currency_id'],
+            ['latest_exchange_rate']
+        );
+    }
+
+    /**
      * @param CurrencyRateUpdateDTO $dto
      * @return CurrencyRateEntity
      */

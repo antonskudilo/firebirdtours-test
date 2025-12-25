@@ -1,87 +1,102 @@
 # Laravel Currency Module
 
-Тестовое задание: модуль для хранения и конвертации валют на Laravel 12 с использованием Docker.  
-Задание выполнено при помощи AI, лог переписки сохранён в корне проекта в файле `chat_logs.txt`.
+Test assignment: a module for storing and converting currencies in Laravel 12 using Docker.
 
 ---
 
-## Текст задания
+## Assignment Description
 
-Необходимо создать модуль для хранения и конвертации валют.
-Модуль должен иметь предопределенный список валют (на усмотрение разработчика - захардкожен в модуле или добавляется через админку). Курсы валют должны быть загружены с https://freecurrencyapi.com/ (документация по API по ссылке https://freecurrencyapi.com/docs) для всех доступных валют и сохранены в БД. Обновление курсов должно происходить раз в сутки. Модуль должен предоставить сервис для конвертации цены из одной валюты в другую (использование примерно такое $converter->convert(123, ‘USD’, ‘RUB’);). Также должна быть создана страница в админке, где должны быть выведены все сохраненные курсы валют.
-Для интеграции с https://freecurrencyapi.com/ нельзя использовать готовые библиотеки именно для этого сайта (например, https://github.com/everapihq/freecurrencyapi-php). Интеграция должна быть реализована с помощью Guzzle, curl, file_get_content или другого инструмента для выполнения http запросов или сетевых запросов.
-Для написания конвертера валют можно использовать любой удобный PHP-фреймворк.
+You need to create a module for storing and converting currencies.  
+The module should have a predefined list of currencies (either hardcoded or added via admin panel at the developer's discretion). Exchange rates should be fetched from [https://freecurrencyapi.com/](https://freecurrencyapi.com/) (API documentation: [https://freecurrencyapi.com/docs](https://freecurrencyapi.com/docs)) for all available currencies and stored in the database. Exchange rates should be updated once per day.  
 
-Задание должно быть выполнено с помощью AI. Вместе с реализованным заданием нужно отправить скриншоты или выгрузку чатов из AI-агента или AI-чатов.
+The module should provide a service for converting prices from one currency to another (example usage: `$converter->convert(123, 'USD', 'RUB');`).  
+
+Additionally, an admin page should display all stored exchange rates.  
+
+For integration with [https://freecurrencyapi.com/](https://freecurrencyapi.com/), you **cannot use ready-made libraries for this site** (e.g., [https://github.com/everapihq/freecurrencyapi-php](https://github.com/everapihq/freecurrencyapi-php)). Integration should be implemented using Guzzle, cURL, `file_get_contents`, or any other HTTP/network request tool.  
+
+You can use any PHP framework you prefer for implementing the currency converter.
 
 ---
 
-## Стек технологий
+## Technology Stack
 
 - PHP 8.4 + Apache
 - Laravel 12
 - MariaDB 11
 - Docker + Docker Compose
-- Очереди Laravel (Queue)
+- Laravel Queues
 - REST API
 
 ---
 
-## Запуск проекта
+## Project Setup
 
-Проект контейнеризован. Для запуска достаточно выполнить из корня проекта:
+The project is containerized. To start it, run from the project root:
 
 ```bash
 docker compose up --build
 ```
 
-При старте контейнера автоматически выполняется:
+On container startup, the following steps are automatically executed:
 
-1. Установка зависимостей через Composer
-2. Генерация ключа приложения `php artisan key:generate`
-3. Миграции и сиды `php artisan migrate --seed`
-4. Загрузка актуальных курсов валют `php artisan currency:update-rates`
-5. Запуск веб-сервера Apache (доступно по HTTP)
-6. Запуск очередей Laravel в отдельном контейнере
+1. Install dependencies via Composer
+2. Generate application key: `php artisan key:generate`
+3. Run migrations and seeders: `php artisan migrate --seed`
+4. Load current exchange rates: `php artisan currency:update-rates`
+5. Start Apache web server (HTTP access)
+6. Start Laravel queues in a separate container
 
 ---
 
-## Доступ к сервису
+## Service Access
 
-- Публичный API доступен по маршруту:
-  ```
-  /api/v1/convert
-  ```
-  Ожидает параметры запроса:
-    - `amount` — сумма для конвертации
-    - `from` — код валюты источника
-    - `to` — код целевой валюты
+- Public API endpoint:
 
+```text
+/api/v1/convert
+```
 
-- Формирование ответа:
-  ```php
-  [
-      'amount' => $responseDto->amount,
-      'from' => $responseDto->from,
-      'to' => $responseDto->to,
-      'result' => $responseDto->result,
-  ]
-  ```
+Expected request parameters:
 
-- Для входа в админку используйте следующие учётные данные:
-  ```
-    login: admin
-    password: admin
-  ```
-- Доступный список валют в админке по маршруту:
-  ```
-  /currencies
-  ```  
+- `amount` — the amount to convert  
+- `from` — source currency code  
+- `to` — target currency code  
 
-- Сохранённые курсы валют доступны в админке по маршруту:
-  ```
-  /currency-rates
-  ```
+Response format:
+
+```php
+[
+    'amount' => $responseDto->amount,
+    'from' => $responseDto->from,
+    'to' => $responseDto->to,
+    'result' => $responseDto->result,
+]
+```
+
+- Admin login credentials:
+
+```text
+login: admin
+password: admin
+```
+
+- List of available currencies in the admin panel:
+
+```text
+/currencies
+```
+
+- Stored exchange rates in the admin panel:
+
+```text
+/currency-rates
+```
+
+- Swagger-generated API documentation is available at:
+
+```text
+/api/documentation
+```
+
 ---
-
-

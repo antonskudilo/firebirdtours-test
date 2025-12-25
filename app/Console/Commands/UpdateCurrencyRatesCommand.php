@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Jobs\UpdateCurrencyRatesJob;
-use App\Services\Currency\CurrencyApiService;
 use App\Services\CurrencyRate\CurrencyRateUpdaterService;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Command\Command as CommandAlias;
@@ -26,7 +25,6 @@ class UpdateCurrencyRatesCommand extends Command
 
         try {
             UpdateCurrencyRatesJob::dispatch(
-                app(CurrencyApiService::class),
                 app(CurrencyRateUpdaterService::class)
             );
         } catch (\Exception $e) {

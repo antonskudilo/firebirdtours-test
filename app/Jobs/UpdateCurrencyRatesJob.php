@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Services\Currency\CurrencyApiService;
 use App\Services\CurrencyRate\CurrencyRateUpdaterService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -17,18 +16,16 @@ class UpdateCurrencyRatesJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
-    public int $backoff = 600; // 10 минут
+    public int $backoff = 600;
 
     public function __construct(
-        private readonly CurrencyApiService $apiService,
         private readonly CurrencyRateUpdaterService $updaterService
     ) {}
 
     public function handle(): void
     {
         try {
-            $rates = $this->apiService->getLatestRates();
-            $this->updaterService->update($rates);
+            $this->updaterService->update();
         } catch (RuntimeException $e) {
             Log::error('UpdateCurrencyRatesJob failed', ['error' => $e->getMessage()]);
 

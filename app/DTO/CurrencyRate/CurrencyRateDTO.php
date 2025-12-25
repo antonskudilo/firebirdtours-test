@@ -6,7 +6,7 @@ use InvalidArgumentException;
 
 readonly class CurrencyRateDTO
 {
-    private function __construct(
+    public function __construct(
         public string $currencyCode,
         public float $latestExchangeRate,
     ) {}

@@ -2,35 +2,43 @@
 
 namespace App\Services\CurrencyRate;
 
-use App\DTO\CurrencyRate\CurrencyRateDTO;
+use App\DTO\CurrencyRate\CurrencyRateBatchUpdateDTO;
 use App\DTO\CurrencyRate\CurrencyRateUpdateDTO;
-use App\Services\Currency\CurrencyService;
+use App\Repositories\CurrencyRepository;
 use RuntimeException;
 
 readonly class CurrencyRateUpdaterService
 {
     public function __construct(
-        private CurrencyService     $currencyService,
-        private CurrencyRateService $currencyRateService,
-        private CurrencyRateCache   $cache
+        private CurrencyRepository             $currencyRepository,
+        private CurrencyRatesProviderInterface $ratesProvider,
+        private CurrencyRateService            $currencyRateService,
+        private CurrencyRateCache              $cache
     ) {}
 
     /**
-     * @param CurrencyRateDTO[] $rates
      * @throws RuntimeException
      */
-    public function update(array $rates): void
+    public function update(): void
     {
-        $currencyIds = $this->getCurrencyIds();
+        $rates = $this->ratesProvider->getLatestRates();
+        $existing = $this->getCurrencyIds();
+        $batch = [];
 
         foreach ($rates as $rateDto) {
-            if (!isset($currencyIds[$rateDto->currencyCode])) {
+            if (!isset($existing[$rateDto->currencyCode])) {
                 continue;
             }
 
-            $this->updateCurrencyRate(
-                currencyId: $currencyIds[$rateDto->currencyCode],
+            $batch[] = new CurrencyRateUpdateDTO(
+                currencyId: $existing[$rateDto->currencyCode],
                 latestExchangeRate: $rateDto->latestExchangeRate
+            );
+        }
+
+        if ($batch !== []) {
+            $this->currencyRateService->batchUpdate(
+                new CurrencyRateBatchUpdateDTO($batch)
             );
         }
 
@@ -42,7 +50,7 @@ readonly class CurrencyRateUpdaterService
      */
     private function getCurrencyIds(): array
     {
-        $currencies = $this->currencyService->list();
+        $currencies = $this->currencyRepository->all();
         $currencyIds = [];
 
         foreach ($currencies as $currency) {
@@ -50,20 +58,5 @@ readonly class CurrencyRateUpdaterService
         }
 
         return $currencyIds;
-    }
-
-    /**
-     * @param int $currencyId
-     * @param float $latestExchangeRate
-     * @return void
-     */
-    private function updateCurrencyRate(int $currencyId, float $latestExchangeRate): void
-    {
-        $currencyRateUpdateDTO = new CurrencyRateUpdateDTO(
-            currencyId: $currencyId,
-            latestExchangeRate: $latestExchangeRate
-        );
-
-        $this->currencyRateService->update($currencyRateUpdateDTO);
     }
 }

@@ -21,6 +21,15 @@ readonly class CurrencyConverterService
      */
     public function convert(CurrencyConvertRequestDTO $dto, int $precision = 4): CurrencyConvertResponseDTO
     {
+        if ($dto->from === $dto->to) {
+            return new CurrencyConvertResponseDTO(
+                amount: $dto->amount,
+                from: $dto->from,
+                to: $dto->to,
+                result: round($dto->amount, $precision)
+            );
+        }
+
         $currencyPairRate = $this->currencyRateService->getCurrencyPairRateByCodes($dto->from, $dto->to);
         $amountInUsd = $dto->amount / $currencyPairRate->fromRate;
         $result = round($amountInUsd * $currencyPairRate->toRate, $precision);
